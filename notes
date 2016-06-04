@@ -1,12 +1,13 @@
 HST-Scaffold
+
+- convention over configuration
 - adapt play/ruby/klein/sinatra style routing
 - develop tdd
 
 - https://commons.apache.org/proper/commons-cli/
 
-- freemarker / mustache templates (java components, ftls, xml) being part of the toolset
-- automatic sitemap, components, pages creates
-- creates components, templates...
-- creates pages, automatic template 'includes' generation
+- scaffold templates (mustache,freemarker) (java components, ftls, xml)
+- automatic creates sitemap, components, pages, templates
+- automatic template 'includes' generation
 
 - update? force regeneration? only create new components?
