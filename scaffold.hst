@@ -1,4 +1,5 @@
-#HST scaffold
+#HST scaffold example
+
 #REQUEST    URL               CONTENTPATH             COMPONENTS
 GET         /                 /home                   home(header,main(banner, text),footer) # home_page
 GET         /simple           /simple                 simple                                 # simple_page
