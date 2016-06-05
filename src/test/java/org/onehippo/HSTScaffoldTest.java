@@ -91,7 +91,7 @@ public class HSTScaffoldTest extends TestCase {
         Scaffold scaffold = Scaffold.instance();
 
         try {
-            // todo create a backup of directories which are going to be changed
+            // todo create a backup of files which are changed
             // todo provide a dryrun option
             scaffold.build();
 
