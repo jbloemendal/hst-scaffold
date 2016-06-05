@@ -1,3 +1,4 @@
+![HST-Scaffold](https://raw.githubusercontent.com/jbloemendal/hst-scaffold/master/logo.png)
 HST-Scaffold
 ============
 
