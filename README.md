@@ -2,7 +2,7 @@
 HST-Scaffold
 ============
 
-Scaffold your projects Hippo Site Toolkit from text file.
+Scaffold your projects Hippo Site Toolkit configuration from text file.
 
 Ideas / Notes
 
