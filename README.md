@@ -6,10 +6,9 @@ Scaffold your projects Hippo Site Toolkit from text file.
 Ideas / Notes
 
 Command Line Client
-
+- develop tdd
 - convention over configuration
 - adapt play/ruby/klein/sinatra style routing configuration
-- develop tdd
 
 - https://commons.apache.org/proper/commons-cli/
 
@@ -22,7 +21,6 @@ Command Line Client
 - automatic template 'include' generation
 
 - update? force regeneration? only create new components?
-
 
 Project Structure e.g.: ?
 /bootstrap/configuration/src/main/resources/hst

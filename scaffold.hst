@@ -1,8 +1,8 @@
 #HST scaffold example
 
-#REQUEST    URL               CONTENTPATH             COMPONENTS
-GET         /                 /home                   home(header,main(banner, text),footer) # home_page
-GET         /simple           /simple                 simple                                 # simple_page
-GET         /contact          /contact                text(header,main(banner, text),footer) # text_page
-GET         /news/:id         /news/id:String         news(header,main(banner, news),footer) # news_page
-GET         /text/*path       /contact/path:String    text(header,main(banner, text),footer) # text_page
+#URL              CONTENTPATH             COMPONENTS
+/                 /home                   home(header,main(banner, text),footer) # home_page
+/simple           /simple                 simple                                 # simple_page
+/contact          /contact                text(header,main(banner, text),footer) # text_page
+/news/:id         /news/id:String         news(header,main(banner, news),footer) # news_page
+/text/*path       /contact/path:String    text(header,main(banner, text),footer) # text_page
