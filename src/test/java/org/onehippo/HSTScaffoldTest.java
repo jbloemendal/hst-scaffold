@@ -21,6 +21,8 @@ import java.util.Map;
 // TODO pseudo codes
 public class HSTScaffoldTest extends TestCase {
 
+    // todo logging
+
     /**
      * Create the test case
      *
@@ -72,9 +74,6 @@ public class HSTScaffoldTest extends TestCase {
         List<Route> routes = scaffold.getRoutes();
         Page page = routes.get(0).getPage();
         List<Component> components = page.getComponents();
-        // TODO
-        // component.getTemplate();
-        // component.getJavaClass();
 
         assertEquals(components.length(), 3);
 
@@ -84,7 +83,34 @@ public class HSTScaffoldTest extends TestCase {
         components = main.getComponents();
 
         assertEquals(components.length, 2);
+
+        Component component = components.get(1);
+        assertEquals(component.getTemplate(), "/some/path/text.ftl");
+        assertEquals(component.getJavaClass(), "/some/path/TextComponent.java");
     }
+
+
+    private Document loadXml(String fileName) {
+        File componentsFile = new File(fileName);
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(componentsFile);
+        return doc;
+    }
+
+
+    private boolean validateComponentXml(String name) {
+        Document doc = loadXml("/path/to/components/"+name+".xml");
+
+        //optional, but recommended
+        //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+        doc.getDocumentElement().normalize();
+
+        // todo validate xml
+
+        return true;
+    }
+
 
     // TODO test actual scaffolding, xml, ftl, files
     public void testComponents() {
@@ -92,21 +118,15 @@ public class HSTScaffoldTest extends TestCase {
 
         try {
             // todo create a backup of files which are changed
-            // todo provide a dryrun option
             scaffold.build();
 
-            File componentsFile = new File("components.xml");
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(componentsFile);
+            assertTrue(validateComponentXml("/path/to/components/home.xml"));
+            assertTrue(validateComponentXml("/path/to/components/header.xml"));
+            assertTrue(validateComponentXml("/path/to/components/main.xml"));
+            assertTrue(validateComponentXml("/path/to/components/banner.xml"));
+            assertTrue(validateComponentXml("/path/to/components/text.xml"));
+            assertTrue(validateComponentXml("/path/to/components/footer.xml"));
 
-            //optional, but recommended
-            //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-            doc.getDocumentElement().normalize();
-
-            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-
-            assertTrue(componentsCreated);
         } catch (SAXException e) {
             e.printStackTrace(); // TODO
         } catch (ParserConfigurationException e) {

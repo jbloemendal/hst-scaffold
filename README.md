@@ -22,6 +22,9 @@ Command Line Client
 
 - update? force regeneration? only create new components?
 
+- how to handle existing project structures?
+    - configuration
+
 Project Structure e.g.: ?
 /bootstrap/configuration/src/main/resources/hst
 /bootstrap/webfiles/src/main/resources/site/freemarker

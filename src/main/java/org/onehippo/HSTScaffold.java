@@ -28,6 +28,8 @@ public class HSTScaffold {
             CommandLine line = parser.parse(options, args);
 
             // todo invoke scaffold build, update, rollback
+
+            // todo print changed / created files (^M/^C)
         } catch( ParseException exp ) {
             // oops, something went wrong
             System.err.println("Parsing failed.  Reason: " + exp.getMessage() );
