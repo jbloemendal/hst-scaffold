@@ -1,7 +1,8 @@
+![HST-Scaffold](https://raw.githubusercontent.com/jbloemendal/hst-scaffold/master/logo.png)
 HST-Scaffold
 ============
 
-Scaffold your projects Hippo Site Toolkit from text file.
+Scaffold your projects Hippo Site Toolkit configuration from text file.
 
 Ideas / Notes
 
