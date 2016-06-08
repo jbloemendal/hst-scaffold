@@ -4,6 +4,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -11,6 +12,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.xpath.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -99,14 +101,59 @@ public class HSTScaffoldTest extends TestCase {
     }
 
 
-    private boolean validateComponentXml(String name) {
-        Document doc = loadXml("/path/to/components/"+name+".xml");
+    private boolean validateComponentXml(String xpathString, String javaClass, String template) throws XPathExpressionException {
+        Document doc = loadXml("/path/to/components/containers.xml");
 
         //optional, but recommended
         //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
         doc.getDocumentElement().normalize();
 
-        // todo validate xml
+        XPathFactory xPathfactory = XPathFactory.newInstance();
+        XPath xpath = xPathfactory.newXPath();
+        XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
+        NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+
+        if (nodeList.getLength() == 1) {
+            Node node = nodeList.item(0);
+            NodeList childNodes = node.getChildNodes();
+
+            // todo order
+
+            // validate
+            /*
+            <sv:property sv:name="jcr:primaryType" sv:type="Name">
+            <sv:value>hst:containeritemcomponent</sv:value>
+            </sv:property>
+            <sv:property sv:name="hst:componentclassname" sv:type="String">
+            <sv:value>org.onehippo.cms7.essentials.components.EssentialsCarouselComponent</sv:value>
+            </sv:property>
+            <sv:property sv:name="hst:template" sv:type="String">
+            <sv:value>essentials-carousel</sv:value>
+            </sv:property>
+            <sv:property sv:name="hst:xtype" sv:type="String">
+            <sv:value>HST.Item</sv:value>
+            </sv:property>
+            */
+
+            Node child = childNodes.item(0);
+            assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
+                    && "hst:containeritemcomponent".equals(child.getFirstChild().getNodeValue()));
+            if (javaClass != null) {
+                child = childNodes.item(1);
+                assertTrue("hst:componentclassname".equals(child.getAttributes().getNamedItem("sv:name"))
+                        && javaClass.equals(child.getFirstChild().getNodeValue()));
+            }
+            if (template != null) {
+                child = childNodes.item(2);
+                assertTrue("hst:template".equals(child.getAttributes().getNamedItem("sv:name"))
+                        && template.equals(child.getFirstChild().getNodeValue()));
+            }
+            // ?
+            child = childNodes.item(3);
+            assertTrue("hst:xtype".equals(child.getAttributes().getNamedItem("sv:name"))
+                    && "HST.Item".equals(child.getFirstChild().getNodeValue()));
+
+        }
 
         return true;
     }
@@ -120,19 +167,21 @@ public class HSTScaffoldTest extends TestCase {
             // todo create a backup of files which are changed
             scaffold.build();
 
-            assertTrue(validateComponentXml("/path/to/components/home.xml"));
-            assertTrue(validateComponentXml("/path/to/components/header.xml"));
-            assertTrue(validateComponentXml("/path/to/components/main.xml"));
-            assertTrue(validateComponentXml("/path/to/components/banner.xml"));
-            assertTrue(validateComponentXml("/path/to/components/text.xml"));
-            assertTrue(validateComponentXml("/path/to/components/footer.xml"));
+            validateComponentXml("/path/to/home", null, null);
+            validateComponentXml("/path/to/header", null, null);
+            validateComponentXml("/path/to/main", null, null);
+            validateComponentXml("/path/to/banner", null, null);
+            validateComponentXml("/path/to/text", null, null);
+            validateComponentXml("/path/to/footer", null, null);
 
         } catch (SAXException e) {
-            e.printStackTrace(); // TODO
+            e.printStackTrace();
         } catch (ParserConfigurationException e) {
-            e.printStackTrace(); // TODO
+            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace(); // TODO
+            e.printStackTrace();
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
         } finally {
             scaffold.rollback();
         }
@@ -155,14 +204,36 @@ public class HSTScaffoldTest extends TestCase {
             doc.getDocumentElement().normalize();
 
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+            try {
+                Document doc = loadXml("/file/to/templates.xml");
+                XPathFactory xPathfactory = XPathFactory.newInstance();
+                XPath xpath = xPathfactory.newXPath();
+                XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
+                NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+                if (nodeList.getLength() == 0) {
+                    /*
+                    <sv:node sv:name="base-top-menu">
+                    <sv:property sv:name="jcr:primaryType" sv:type="Name">
+                    <sv:value>hst:template</sv:value>
+                    </sv:property>
+                    <sv:property sv:name="hst:renderpath" sv:type="String">
+                    <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
+                    </sv:property>
+                    </sv:node>
+                    */
+                }
 
-            assertTrue(xmlValidates);
+                if (nodeList.getLength() == 1) {
+                    Node node = nodeList.item(0);
+                    NodeList childNodes = node.getChildNodes();
 
-            assertTrue(elementsPresent);
-
-            assertTrue(templatesFtlCreated);
-
-        } catch(Exception e) {
+                    assertTrue(elementsPresent);
+                    assertTrue(templatesFtlCreated);
+                }
+            } catch (XPathExpressionException e) {
+                e.printStackTrace();
+            }
+        } finally {
             scaffold.rollback();
         }
     }
