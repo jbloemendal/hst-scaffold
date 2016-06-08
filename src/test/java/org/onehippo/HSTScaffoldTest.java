@@ -118,7 +118,6 @@ public class HSTScaffoldTest extends TestCase {
             NodeList childNodes = node.getChildNodes();
 
             // todo order
-
             // validate
             /*
             <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -208,27 +207,36 @@ public class HSTScaffoldTest extends TestCase {
                 Document doc = loadXml("/file/to/templates.xml");
                 XPathFactory xPathfactory = XPathFactory.newInstance();
                 XPath xpath = xPathfactory.newXPath();
-                XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
-                NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-                if (nodeList.getLength() == 0) {
-                    /*
-                    <sv:node sv:name="base-top-menu">
-                    <sv:property sv:name="jcr:primaryType" sv:type="Name">
-                    <sv:value>hst:template</sv:value>
-                    </sv:property>
-                    <sv:property sv:name="hst:renderpath" sv:type="String">
-                    <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
-                    </sv:property>
-                    </sv:node>
-                    */
-                }
 
-                if (nodeList.getLength() == 1) {
-                    Node node = nodeList.item(0);
-                    NodeList childNodes = node.getChildNodes();
+                for (Template template : scaffold.getTemplates()) {
 
-                    assertTrue(elementsPresent);
-                    assertTrue(templatesFtlCreated);
+                    XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
+                    NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+
+                    if (nodeList.getLength() == 1) {
+                        /*
+                        <sv:node sv:name="base-top-menu">
+                        <sv:property sv:name="jcr:primaryType" sv:type="Name">
+                        <sv:value>hst:template</sv:value>
+                        </sv:property>
+                        <sv:property sv:name="hst:renderpath" sv:type="String">
+                        <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
+                        </sv:property>
+                        </sv:node>
+                        */
+
+                        Node node = nodeList.item(0);
+                        NodeList childNodes = node.getChildNodes();
+
+                        assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
+                                && "hst:template".equals(child.getFirstChild().getNodeValue()));
+
+                        assertTrue("hst:renderpath".equals(child.getAttributes().getNamedItem("sv:name"))
+                                && template.getRenderPath().equals(child.getFirstChild().getNodeValue()));
+
+                        assertTrue((new File(template.getFile()).exists()));
+                    }
+
                 }
             } catch (XPathExpressionException e) {
                 e.printStackTrace();
