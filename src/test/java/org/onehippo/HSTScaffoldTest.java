@@ -13,9 +13,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.xpath.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * Unit test for simple HSTScaffold.
@@ -228,9 +229,11 @@ public class HSTScaffoldTest extends TestCase {
                         Node node = nodeList.item(0);
                         NodeList childNodes = node.getChildNodes();
 
+                        Node child = childNodes.item(0);
                         assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
                                 && "hst:template".equals(child.getFirstChild().getNodeValue()));
 
+                        child = childNodes.item(1);
                         assertTrue("hst:renderpath".equals(child.getAttributes().getNamedItem("sv:name"))
                                 && template.getRenderPath().equals(child.getFirstChild().getNodeValue()));
 
@@ -243,6 +246,17 @@ public class HSTScaffoldTest extends TestCase {
             }
         } finally {
             scaffold.rollback();
+        }
+    }
+
+    private void testTemplateInclude(Component component) {
+        Reader reader = new BufferedReader(new FileReader(new File((component.getTemplate()))));
+        Scanner scanner = new Scanner(reader);
+
+        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">"))));
+
+        for (Component component : component.getComponents()) {
+            testTemplateInclude(component);
         }
     }
 
@@ -261,10 +275,14 @@ public class HSTScaffoldTest extends TestCase {
             //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
             doc.getDocumentElement().normalize();
 
-            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-
             // home(header,main(banner, text),footer)
-            assertTrue(templateIncludesExist);
+            for (Page page : scaffold.getPages()) {
+                List<Component> components = page.getComponents();
+                for (Component component : components) {
+                    // home template should contain header include, main include, footer include
+                    testTemplateInclude(component);
+                }
+            }
         } catch(Exception e) {
             scaffold.rollback();
         }
