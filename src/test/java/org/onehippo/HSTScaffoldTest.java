@@ -102,7 +102,7 @@ public class HSTScaffoldTest extends TestCase {
     }
 
 
-    private boolean validateComponentXml(String xpathString, String javaClass, String template) throws XPathExpressionException {
+    private boolean validateComponentXml(Component component) throws XPathExpressionException {
         Document doc = loadXml("/path/to/components/containers.xml");
 
         //optional, but recommended
@@ -134,6 +134,9 @@ public class HSTScaffoldTest extends TestCase {
             <sv:value>HST.Item</sv:value>
             </sv:property>
             */
+
+            String javaClass = component.getJavaClass();
+            String template = component.getTemplate();
 
             Node child = childNodes.item(0);
             assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
@@ -167,12 +170,9 @@ public class HSTScaffoldTest extends TestCase {
             // todo create a backup of files which are changed
             scaffold.build();
 
-            validateComponentXml("/path/to/home", null, null);
-            validateComponentXml("/path/to/header", null, null);
-            validateComponentXml("/path/to/main", null, null);
-            validateComponentXml("/path/to/banner", null, null);
-            validateComponentXml("/path/to/text", null, null);
-            validateComponentXml("/path/to/footer", null, null);
+            for (Component component : component.getComponents()) {
+                validateComponentXml(component);
+            }
 
         } catch (SAXException e) {
             e.printStackTrace();
@@ -253,7 +253,7 @@ public class HSTScaffoldTest extends TestCase {
         Reader reader = new BufferedReader(new FileReader(new File((component.getTemplate()))));
         Scanner scanner = new Scanner(reader);
 
-        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">"))));
+        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">")));
 
         for (Component component : component.getComponents()) {
             testTemplateInclude(component);
