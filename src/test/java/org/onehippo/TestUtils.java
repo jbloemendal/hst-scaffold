@@ -1,7 +1,12 @@
 package org.onehippo;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,4 +56,11 @@ public class TestUtils {
         return hashesContained(dir1, dir2) && hashesContained(dir2, dir1);
     }
 
+    private Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {
+        File componentsFile = new File(fileName);
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(componentsFile);
+        return doc;
+    }
 }

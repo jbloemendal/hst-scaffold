@@ -29,6 +29,8 @@ public class HSTScaffoldTest extends TestCase {
 
     // todo logging
 
+    public static String PROJECT_DIR = "."; //todo
+
     /**
      * Create the test case
      *
@@ -96,17 +98,8 @@ public class HSTScaffoldTest extends TestCase {
     }
 
 
-    private Document loadXml(String fileName) {
-        File componentsFile = new File(fileName);
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dBuilder.parse(componentsFile);
-        return doc;
-    }
-
-
     private boolean validateComponentXml(Component component) throws XPathExpressionException {
-        Document doc = loadXml("/path/to/components/containers.xml");
+        Document doc = TestUtils.loadXml("/path/to/components/containers.xml");
 
         //optional, but recommended
         //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
@@ -167,6 +160,8 @@ public class HSTScaffoldTest extends TestCase {
 
     // TODO test actual scaffolding, xml, ftl, files
     public void testComponents() {
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         try {
@@ -189,10 +184,14 @@ public class HSTScaffoldTest extends TestCase {
             scaffold.rollback();
         }
 
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
+
     public void testTemplates() {
-        final Map<String, String> before = TestUtils.dirHash(new File("."));
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         try {
@@ -209,42 +208,14 @@ public class HSTScaffoldTest extends TestCase {
 
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
             try {
-                Document doc = loadXml("/file/to/templates.xml");
+                Document doc = TestUtils.loadXml("/file/to/templates.xml");
                 XPathFactory xPathfactory = XPathFactory.newInstance();
                 XPath xpath = xPathfactory.newXPath();
 
                 for (Template template : scaffold.getTemplates()) {
-
-                    XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
-                    NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-
-                    if (nodeList.getLength() == 1) {
-                        /*
-                        <sv:node sv:name="base-top-menu">
-                        <sv:property sv:name="jcr:primaryType" sv:type="Name">
-                        <sv:value>hst:template</sv:value>
-                        </sv:property>
-                        <sv:property sv:name="hst:renderpath" sv:type="String">
-                        <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
-                        </sv:property>
-                        </sv:node>
-                        */
-
-                        Node node = nodeList.item(0);
-                        NodeList childNodes = node.getChildNodes();
-
-                        Node child = childNodes.item(0);
-                        assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
-                                && "hst:template".equals(child.getFirstChild().getNodeValue()));
-
-                        child = childNodes.item(1);
-                        assertTrue("hst:renderpath".equals(child.getAttributes().getNamedItem("sv:name"))
-                                && template.getRenderPath().equals(child.getFirstChild().getNodeValue()));
-
-                        assertTrue((new File(template.getFile()).exists()));
-                    }
-
+                    validateTemplate(doc, xpath, template);
                 }
+
             } catch (XPathExpressionException e) {
                 e.printStackTrace();
             }
@@ -252,8 +223,39 @@ public class HSTScaffoldTest extends TestCase {
             scaffold.rollback();
         }
 
-        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
         assertFalse(TestUtils.dirChanged(before, after));
+    }
+
+    private void validateTemplate(Document doc, XPath xpath, Template template) throws XPathExpressionException {
+        XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
+        NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+
+        if (nodeList.getLength() == 1) {
+            /*
+            <sv:node sv:name="base-top-menu">
+            <sv:property sv:name="jcr:primaryType" sv:type="Name">
+            <sv:value>hst:template</sv:value>
+            </sv:property>
+            <sv:property sv:name="hst:renderpath" sv:type="String">
+            <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
+            </sv:property>
+            </sv:node>
+            */
+
+            Node node = nodeList.item(0);
+            NodeList childNodes = node.getChildNodes();
+
+            Node child = childNodes.item(0);
+            assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
+                    && "hst:template".equals(child.getFirstChild().getNodeValue()));
+
+            child = childNodes.item(1);
+            assertTrue("hst:renderpath".equals(child.getAttributes().getNamedItem("sv:name"))
+                    && template.getRenderPath().equals(child.getFirstChild().getNodeValue()));
+
+            assertTrue((new File(template.getFile()).exists()));
+        }
     }
 
     private void testTemplateInclude(Component component) {
@@ -267,7 +269,10 @@ public class HSTScaffoldTest extends TestCase {
         }
     }
 
+
     public void testTemplateIncludes() {
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         try {
@@ -293,45 +298,50 @@ public class HSTScaffoldTest extends TestCase {
         } catch(Exception e) {
             scaffold.rollback();
         }
+
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    // TODO project dir
+
     public void testDryRun() {
-        final Map<String, String> before = TestUtils.dirHash(new File("."));
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         // persist data to dry run .scaffold/dryrun directory instead of project
         scaffold.dryRun();
 
-        final Map<String, String> after = TestUtils.dirHash(new File("."));
-
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    // TODO project dir
+
     public void testRollback() {
-        final Map<String, String> before = TestUtils.dirHash(new File("."));
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         scaffold.build();
 
-        assertTrue(new File(".scaffold").exists());
+        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
 
         scaffold.rollback();
 
-        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
 
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    // TODO project dir
+
     public void testUpdateDryRun() {
-        final Map<String, String> before = TestUtils.dirHash(new File("."));
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         scaffold.build();
 
-        assertTrue(new File(".scaffold").exists());
+        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
 
         scaffold.addRoute(new Route("/dryrun", "dryrun", "dryrun(header,main(banner,text),footer)"));
 
@@ -341,17 +351,19 @@ public class HSTScaffoldTest extends TestCase {
 
         scaffold.rollback();
 
-        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    // TODO project dir
+
     public void testUpdate() {
-        final Map<String, String> before = TestUtils.dirHash(new File("."));
+        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+
         Scaffold scaffold = Scaffold.instance();
 
         scaffold.build();
-        assertTrue(new File(".scaffold").exists());
+
+        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
 
         assertTrue(filesBuild);
 
@@ -361,7 +373,7 @@ public class HSTScaffoldTest extends TestCase {
 
         scaffold.rollback();
 
-        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
