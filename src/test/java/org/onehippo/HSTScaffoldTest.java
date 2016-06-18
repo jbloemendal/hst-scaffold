@@ -192,6 +192,7 @@ public class HSTScaffoldTest extends TestCase {
     }
 
     public void testTemplates() {
+        final Map<String, String> before = TestUtils.dirHash(new File("."));
         Scaffold scaffold = Scaffold.instance();
 
         try {
@@ -250,6 +251,9 @@ public class HSTScaffoldTest extends TestCase {
         } finally {
             scaffold.rollback();
         }
+
+        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
     private void testTemplateInclude(Component component) {
@@ -291,92 +295,63 @@ public class HSTScaffoldTest extends TestCase {
         }
     }
 
+    // TODO project dir
     public void testDryRun() {
+        final Map<String, String> before = TestUtils.dirHash(new File("."));
         Scaffold scaffold = Scaffold.instance();
 
         // persist data to dry run .scaffold/dryrun directory instead of project
         scaffold.dryRun();
 
-        assertTrue(filesDeleted);
+        final Map<String, String> after = TestUtils.dirHash(new File("."));
+
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    private Map<String, String> dirHash(File dir) {
-        final Map<String, String> hashes = new HashMap<String, String>();
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
-                hashes.putAll(dirHash(file));
-            } else if(file.isFile()) {
-                try {
-                    String md5 = DigestUtils.md5Hex(new BufferedInputStream(new FileInputStream(file)));
-                    hashes.put(file.getAbsolutePath(), md5);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return hashes;
-    }
-
-    private boolean hashesContained(Map<String, String> dir1, Map<String, String> dir2) {
-        for (Map.Entry<String, String> entry : dir1.entrySet()) {
-            String filePath = entry.getKey();
-
-            if (!dir2.containsKey(filePath)) {
-                return false;
-            }
-            if (!entry.getValue().equals(dir2.get(filePath))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean dirChanged(Map<String, String> dir1, Map<String, String> dir2) {
-        if (dir1.size() != dir2.size()) {
-            return false;
-        }
-
-        return hashesContained(dir1, dir2) && hashesContained(dir2, dir1);
-    }
-
+    // TODO project dir
     public void testRollback() {
+        final Map<String, String> before = TestUtils.dirHash(new File("."));
         Scaffold scaffold = Scaffold.instance();
-
-        final Map<String, String> before = dirHash(new File(".")); // TODO project dir
 
         scaffold.build();
 
-        assertTrue(new File(".scaffold").exists()); // TODO project dir
+        assertTrue(new File(".scaffold").exists());
 
         scaffold.rollback();
 
-        final Map<String, String> after = dirHash(new File("."));
+        final Map<String, String> after = TestUtils.dirHash(new File("."));
 
-        assertFalse(dirChanged(before, after));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
+    // TODO project dir
     public void testUpdateDryRun() {
+        final Map<String, String> before = TestUtils.dirHash(new File("."));
         Scaffold scaffold = Scaffold.instance();
 
         scaffold.build();
 
-        assertTrue(filesBuild);
+        assertTrue(new File(".scaffold").exists());
 
         scaffold.addRoute(new Route("/dryrun", "dryrun", "dryrun(header,main(banner,text),footer)"));
 
         scaffold.dryRun();
 
-        assertTrue(dryRunUpdated);
+        assertTrue(dryRunUpdated); // TODO
 
         scaffold.rollback();
 
-        assertTrue(filesDeleted);
+        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
+    // TODO project dir
     public void testUpdate() {
+        final Map<String, String> before = TestUtils.dirHash(new File("."));
         Scaffold scaffold = Scaffold.instance();
 
         scaffold.build();
+        assertTrue(new File(".scaffold").exists());
 
         assertTrue(filesBuild);
 
@@ -386,7 +361,8 @@ public class HSTScaffoldTest extends TestCase {
 
         scaffold.rollback();
 
-        assertTrue(filesDeleted);
+        final Map<String, String> after = TestUtils.dirHash(new File("."));
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
 }
