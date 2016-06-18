@@ -1,39 +1,34 @@
 package org.onehippo;
 
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HSTScaffold {
 
-    // TODO add logging
+    private static HSTScaffold scaffold;
 
-    public static void main( String[] args ) {
-        // create the parser
-        CommandLineParser parser = new BasicParser();
-        try {
-            Options options = new Options();
-            // todo render help overview
-            options.addOption("h", "help", false, "show help.");
+    private List<Route> routes;
 
-            options.addOption("b", "build", true, "Build configuration from scaffold.");
-            options.addOption("u", "update", true, "Update configuration from  scaffold.");
-            options.addOption("r", "rollback", true, "Rollback configuration changes.");
-            options.addOption("c", "configuration", true, "Custom configuration file.");
+    public List<Route> getRoutes() {
 
-            // parse the command line arguments
-            CommandLine line = parser.parse(options, args);
+        return routes;
+    }
 
-            // todo invoke scaffold build, update, rollback
+    private void read() {
+        File config = new File("scaffold.hst"); // todo file path
 
-            // todo print changed / created files (^M/^C)
-        } catch( ParseException exp ) {
-            // oops, something went wrong
-            System.err.println("Parsing failed.  Reason: " + exp.getMessage() );
-        }
+        // todo file scanner / reader
+        // fill routes, pages, components ...
 
     }
+
+    public static HSTScaffold instance() {
+        if (scaffold == null) {
+            scaffold = new HSTScaffold();
+        }
+        return scaffold;
+    }
+
 }

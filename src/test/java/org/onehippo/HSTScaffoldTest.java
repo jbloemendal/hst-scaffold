@@ -22,7 +22,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
- * Unit test for simple HSTScaffold.
+ * Unit test for HSTScaffold.
  */
 // TODO pseudo codes
 public class HSTScaffoldTest extends TestCase {
@@ -56,7 +56,7 @@ public class HSTScaffoldTest extends TestCase {
 
     // Test Parsing
     public void testScaffoldRoutes() {
-        Scaffold scaffold = Scaffold.instance();
+        HSTScaffold scaffold = HSTScaffold.instance();
         List<Route> routes = scaffold.getRoutes();
         assertEquals(routes.length(), 5);
     }
@@ -357,15 +357,18 @@ public class HSTScaffoldTest extends TestCase {
 
 
     public void testUpdate() {
-        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+        final Map<String, String> start = TestUtils.dirHash(new File(PROJECT_DIR));
 
         Scaffold scaffold = Scaffold.instance();
-
         scaffold.build();
+
+        final Map<String, String> beforeUpdate = TestUtils.dirHash(new File(PROJECT_DIR));
 
         assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
 
         assertTrue(filesBuild);
+
+        scaffold.addRoute(new Route("/update", "update", "update(header,main(banner,text),footer)"));
 
         scaffold.update();
 
@@ -373,8 +376,13 @@ public class HSTScaffoldTest extends TestCase {
 
         scaffold.rollback();
 
-        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
-        assertFalse(TestUtils.dirChanged(before, after));
+        final Map<String, String> afterUpdate = TestUtils.dirHash(new File(PROJECT_DIR));
+        assertFalse(TestUtils.dirChanged(beforeUpdate, afterUpdate));
+
+        scaffold.rollback();
+
+        final Map<String, String> end = TestUtils.dirHash(new File(PROJECT_DIR));
+        assertFalse(TestUtils.dirChanged(start, end));
     }
 
 }
