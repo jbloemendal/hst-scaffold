@@ -3,10 +3,12 @@ package org.onehippo;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import sun.security.provider.MD5;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -14,6 +16,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.xpath.*;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -297,16 +300,59 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue(filesDeleted);
     }
 
+    private Map<String, String> dirHash(File dir) {
+        final Map<String, String> hashes = new HashMap<String, String>();
+        for (File file : dir.listFiles()) {
+            if (file.isDirectory()) {
+                hashes.putAll(dirHash(file));
+            } else if(file.isFile()) {
+                try {
+                    String md5 = DigestUtils.md5Hex(new BufferedInputStream(new FileInputStream(file)));
+                    hashes.put(file.getAbsolutePath(), md5);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return hashes;
+    }
+
+    private boolean hashesContained(Map<String, String> dir1, Map<String, String> dir2) {
+        for (Map.Entry<String, String> entry : dir1.entrySet()) {
+            String filePath = entry.getKey();
+
+            if (!dir2.containsKey(filePath)) {
+                return false;
+            }
+            if (!entry.getValue().equals(dir2.get(filePath))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean dirChanged(Map<String, String> dir1, Map<String, String> dir2) {
+        if (dir1.size() != dir2.size()) {
+            return false;
+        }
+
+        return hashesContained(dir1, dir2) && hashesContained(dir2, dir1);
+    }
+
     public void testRollback() {
         Scaffold scaffold = Scaffold.instance();
 
+        final Map<String, String> before = dirHash(new File(".")); // TODO project dir
+
         scaffold.build();
 
-        assertTrue(filesBuild);
+        assertTrue(new File(".scaffold").exists()); // TODO project dir
 
         scaffold.rollback();
 
-        assertTrue(projectAtInitialState);
+        final Map<String, String> after = dirHash(new File("."));
+
+        assertFalse(dirChanged(before, after));
     }
 
     public void testUpdateDryRun() {
