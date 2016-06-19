@@ -55,8 +55,8 @@ public class HSTScaffoldTest extends TestCase {
     public void testRoute() {
         Route route = new Route("/text/*path",       "/contact/path:String",    "text(header,main(banner, text),footer)");
 
-        List<String> parameters = route.getParameters();
-        assertTrue(parameters.get(0).equals("path"));
+        List<Route.Parameter> parameters = route.getParameters();
+        assertTrue(parameters.get(0).name.equals("path"));
 
         Route.Component page = route.getPage();
         List<Route.Component> components = page.getComponents();

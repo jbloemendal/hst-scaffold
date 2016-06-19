@@ -19,7 +19,12 @@ public class Route {
 
     private Component page;
 
-    private List<String> parameters;
+    private List<Parameter> parameters;
+
+    public class Parameter {
+        public String name;
+        public String type;
+    }
 
     public class Component {
         private String name;
@@ -87,8 +92,16 @@ public class Route {
 
         Pattern parameterPattern = Pattern.compile("\\*|:[^/]]+");
         while (parameterScanner.hasNext(parameterPattern)) {
-            String parameter = parameterScanner.next(parameterPattern);
-            parameters.add(parameter);
+            String parameter = parameterScanner.next(parameterPattern).substring(1);
+
+            Pattern contentPattern = Pattern.compile(parameter+":(String|Integer|Double|Boolean)");
+            Matcher matcher = contentPattern.matcher(contentPath);
+            if (matcher.matches()) {
+                Parameter p = new Parameter();
+                p.name = parameter;
+                p.type = matcher.group(1);
+                parameters.add(p);
+            }
         }
 
         page = parseComponentExpression(pageConstruct);
@@ -98,7 +111,7 @@ public class Route {
         return page;
     }
 
-    public List<String> getParameters() {
+    public List<Parameter> getParameters() {
         return parameters;
     }
 
