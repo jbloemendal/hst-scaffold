@@ -6,10 +6,11 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.log4j.Logger;
 
 public class HSTScaffoldCLI {
 
-    // TODO add logging
+    final static Logger log = Logger.getLogger(HSTScaffoldCLI.class);
 
     public static void main( String[] args ) {
         // create the parser
@@ -21,7 +22,7 @@ public class HSTScaffoldCLI {
             options.addOption("b", "build", true, "Build configuration from scaffold.");
             options.addOption("c", "configuration file", true, "Custom configuration file.");
             options.addOption("u", "update", true, "Update configuration from scaffold.");
-            options.addOption("s", "", true, "Build scaffold from configuration (reverse)");
+            options.addOption("s", "Build scaffold from existing project configuration.", true, "Build scaffold from configuration (reverse)");
             options.addOption("r", "rollback", true, "Rollback configuration changes.");
 
             // parse the command line arguments
@@ -31,7 +32,7 @@ public class HSTScaffoldCLI {
 
             // todo print changed / created files (^M/^C)
         } catch( ParseException exp ) {
-            // oops, something went wrong
+            log.error("Parsing failed.", exp);
             System.err.println("Parsing failed.  Reason: " + exp.getMessage() );
         }
 

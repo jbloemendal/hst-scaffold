@@ -3,6 +3,7 @@ package org.onehippo;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 // TODO pseudo codes
 public class HSTScaffoldTest extends TestCase {
 
-    // todo logging
+    final static Logger log = Logger.getLogger(HSTScaffold.class);
 
     public static String PROJECT_DIR = "."; //todo
 
@@ -169,13 +170,13 @@ public class HSTScaffoldTest extends TestCase {
             }
 
         } catch (SAXException e) {
-            e.printStackTrace();
+            log.error("Error testing components, parsing xml.", e);
         } catch (ParserConfigurationException e) {
-            e.printStackTrace();
+            log.error("Error testing components, parser configuration error.", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error testing components, reading file.", e);
         } catch (XPathExpressionException e) {
-            e.printStackTrace();
+            log.error("Error testing components, XPath expression", e);
         } finally {
             scaffold.rollback();
         }
@@ -213,7 +214,7 @@ public class HSTScaffoldTest extends TestCase {
                 }
 
             } catch (XPathExpressionException e) {
-                e.printStackTrace();
+                log.error("Error testing templates, XPath expression error", e);
             }
         } finally {
             scaffold.rollback();

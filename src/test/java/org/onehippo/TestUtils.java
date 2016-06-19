@@ -1,6 +1,7 @@
 package org.onehippo;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -17,6 +18,8 @@ import java.util.Map;
 
 public class TestUtils {
 
+    final static Logger log = Logger.getLogger(TestUtils.class);
+
     public static Map<String, String> dirHash(File dir) {
         final Map<String, String> hashes = new HashMap<String, String>();
         for (File file : dir.listFiles()) {
@@ -27,7 +30,7 @@ public class TestUtils {
                     String md5 = DigestUtils.md5Hex(new BufferedInputStream(new FileInputStream(file)));
                     hashes.put(file.getAbsolutePath(), md5);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Error reading file hash.", e);
                 }
             }
         }
