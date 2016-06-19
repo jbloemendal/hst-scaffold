@@ -54,19 +54,19 @@ public class HSTScaffold {
 
             // *name, :id
             // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
-            Pattern urlPattern = Pattern.compile("\\s*(/[^/]]/?)+"); // todo
+            Pattern urlPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
             if (!lineScanner.hasNext(urlPattern)) {
                 continue; // todo error logging
             }
             String urlMatcher = lineScanner.next(urlPattern);
 
-            Pattern contentPattern = Pattern.compile("\\s*(/[^/]]/?)+"); // todo
+            Pattern contentPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
             if (!lineScanner.hasNext(contentPattern)) {
                 continue; // todo error logging
             }
             String contentPath = lineScanner.next(contentPattern);
 
-            Pattern pagePattern = Patter.compile(""); //todo
+            Pattern pagePattern = Pattern.compile("[\\w\\(\\),\\s]+");
             if (!lineScanner.hasNext(pagePattern)) {
                 continue; // todo error logging
             }

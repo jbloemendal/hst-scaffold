@@ -14,6 +14,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
 import java.io.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -51,7 +52,25 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue(true);
     }
 
-    // Test Parsing
+    public void testRoute() {
+        Route route = new Route("/text/*path",       "/contact/path:String",    "text(header,main(banner, text),footer)");
+
+        List<String> parameters = route.getParameters();
+        assertTrue(parameters.get(0).equals("path"));
+
+        Route.Component page = route.getPage();
+        List<Route.Component> components = page.getComponents();
+        assertTrue(components.size() == 3);
+
+        Route.Component main = components.get(1);
+        assertTrue(main.getComponents().size() == 2);
+
+        // todo paths
+        Route.Component header = components.get(0);
+        assertTrue("/test/path/header.ftl".equals(header.getTemplate()));
+        assertTrue("/test/path/HeaderComponent.java".equals(header.getTemplate()));
+    }
+
     public void testScaffoldRoutes() {
         HSTScaffold scaffold = HSTScaffold.instance();
         List<Route> routes = scaffold.getRoutes();
