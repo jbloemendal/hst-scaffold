@@ -3,20 +3,16 @@ package org.onehippo;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import sun.security.provider.MD5;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.stream.XMLStreamReader;
 import javax.xml.xpath.*;
 import java.io.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -322,10 +318,14 @@ public class HSTScaffoldTest extends TestCase {
 
         Scaffold scaffold = Scaffold.instance();
 
+        // todo backup all files which are going to be changed (versioned history, timestamp folders)
         scaffold.build();
 
-        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
+        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME).exists());
+        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME +"/history").exists());
 
+        // todo backup edited files (manual changed files) (rollback - rollback)
+        // todo warn user that he edited files, which we will revert (force option?)
         scaffold.rollback();
 
         final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
@@ -341,7 +341,7 @@ public class HSTScaffoldTest extends TestCase {
 
         scaffold.build();
 
-        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
+        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME).exists());
 
         scaffold.addRoute(new Route("/dryrun", "dryrun", "dryrun(header,main(banner,text),footer)"));
 
@@ -364,7 +364,7 @@ public class HSTScaffoldTest extends TestCase {
 
         final Map<String, String> beforeUpdate = TestUtils.dirHash(new File(PROJECT_DIR));
 
-        assertTrue(new File(new File(PROJECT_DIR), ".scaffold").exists());
+        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME).exists());
 
         assertTrue(filesBuild);
 

@@ -18,14 +18,11 @@ public class HSTScaffoldCLI {
             Options options = new Options();
 
             options.addOption("h", "help", false, "show help.");
-
             options.addOption("b", "build", true, "Build configuration from scaffold.");
+            options.addOption("c", "configuration file", true, "Custom configuration file.");
             options.addOption("u", "update", true, "Update configuration from scaffold.");
-
             options.addOption("s", "", true, "Build scaffold from configuration (reverse)");
-
             options.addOption("r", "rollback", true, "Rollback configuration changes.");
-            options.addOption("c", "configuration", true, "Custom configuration file.");
 
             // parse the command line arguments
             CommandLine line = parser.parse(options, args);

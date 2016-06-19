@@ -20,7 +20,7 @@ public class TestUtils {
     public static Map<String, String> dirHash(File dir) {
         final Map<String, String> hashes = new HashMap<String, String>();
         for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
+            if (file.isDirectory() && !HSTScaffold.SCAFFOLD_DIR_NAME.equals(file.getName())) {
                 hashes.putAll(dirHash(file));
             } else if(file.isFile()) {
                 try {
@@ -56,7 +56,7 @@ public class TestUtils {
         return hashesContained(dir1, dir2) && hashesContained(dir2, dir1);
     }
 
-    private Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {
+    public Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {
         File componentsFile = new File(fileName);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
