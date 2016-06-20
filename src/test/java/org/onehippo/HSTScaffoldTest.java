@@ -36,6 +36,8 @@ public class HSTScaffoldTest extends TestCase {
      */
     public HSTScaffoldTest(String testName) {
         super(testName);
+
+        HSTScaffold.instance();
     }
 
     /**

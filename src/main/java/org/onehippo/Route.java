@@ -44,11 +44,15 @@ public class Route {
         }
 
         public String getTemplate() {
-            return name; // todo path
+            String projectDir = HSTScaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
+            String templatePath = HSTScaffold.getConfig().getProperty(HSTScaffold.TEMPLATE_PATH);
+            return projectDir+templatePath+name;
         }
 
         public String getJavaClass() {
-            return name; // todo path
+            String projectDir = HSTScaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
+            String javaComponentPath = HSTScaffold.getConfig().getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
+            return projectDir+javaComponentPath+name;
         }
 
         public void add(Component component) {
@@ -115,7 +119,4 @@ public class Route {
         return parameters;
     }
 
-    // todo parse placehodlers
-    // *name, :id
-    // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
 }

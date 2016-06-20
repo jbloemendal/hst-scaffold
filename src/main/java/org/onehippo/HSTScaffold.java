@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,12 @@ public class HSTScaffold {
     final static Logger log = Logger.getLogger(HSTScaffold.class);
 
     final public static String SCAFFOLD_DIR_NAME = ".scaffold";
+
+    public static final String PROJECT_DIR = "PROJECT_DIR";
+
+    public static final String TEMPLATE_PATH = "TEMPLATE_PATH";
+
+    public static final String JAVA_COMPONENT_PATH = "JAVA_COMPONENT_PATH";
 
     private static HSTScaffold scaffold;
 
@@ -56,19 +63,22 @@ public class HSTScaffold {
             // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
             Pattern urlPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
             if (!lineScanner.hasNext(urlPattern)) {
-                continue; // todo error logging
+                log.warn("Invalid route: "+line);
+                continue;
             }
             String urlMatcher = lineScanner.next(urlPattern);
 
             Pattern contentPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
             if (!lineScanner.hasNext(contentPattern)) {
-                continue; // todo error logging
+                log.warn("Invalid route: "+line);
+                continue;
             }
             String contentPath = lineScanner.next(contentPattern);
 
             Pattern pagePattern = Pattern.compile("[\\w\\(\\),\\s]+");
             if (!lineScanner.hasNext(pagePattern)) {
-                continue; // todo error logging
+                log.warn("Invalid route: "+line);
+                continue;
             }
             String pageConstruct = lineScanner.next(pagePattern);
 
@@ -77,10 +87,19 @@ public class HSTScaffold {
 
     }
 
+    public static Properties getConfig() {
+        Properties properties = new Properties();
+        properties.put(PROJECT_DIR, "");
+        properties.put(TEMPLATE_PATH, "");
+        properties.put(JAVA_COMPONENT_PATH, "");
+        return properties;
+    }
+
     public static HSTScaffold instance() {
         if (scaffold == null) {
             scaffold = new HSTScaffold();
         }
+        // todo load properties
         return scaffold;
     }
 
