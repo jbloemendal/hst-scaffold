@@ -11,9 +11,11 @@ import java.util.regex.Pattern;
 public class Route {
 
     final static Logger log = Logger.getLogger(Route.class);
-    public static final Pattern LETTER = Pattern.compile("[A-Za-z]]");
-    public static final Pattern COMMA = Pattern.compile("\\s*,\\s*");
-    public static final Pattern OPEN_BRACKET = Pattern.compile("\\(");
+    public static final Pattern WORD = Pattern.compile("^([A-Za-z]+).*");
+    public static final Pattern COMMA = Pattern.compile("^(\\s*,\\s*).*");
+    public static final Pattern OPEN_BRACKET = Pattern.compile("^(\\s*\\(\\s*).*");
+    public static final Pattern SUB_EXPRESSION = Pattern.compile("(.*\\s*)\\)[^\\)]*$");
+    public static final Pattern CLOSE_BRACKET = Pattern.compile("^(\\s*\\)\\s*).*");
 
     private String urlMatcher;
 
@@ -80,38 +82,71 @@ public class Route {
         build();
     }
 
-    private Component parseComponentExpression(String expr) {
-        Component component = null;
 
-        log.debug("parseComponentExpression: " + expr);
+    /*
+    test(foo, bar(baz, blue), duba(dabi, du))
+    test(foo, bar(baz, blue)
 
-        Pattern pattern = Pattern.compile("^([^(,\\s]+)\\(([\\)]*\\))"); // todo fix expression
-        Scanner scanner = new Scanner(expr);
+    EXPR
+            WORD
+    comp
 
-        String componentStr = null;
-        while ((componentStr = scanner.findInLine(pattern)) != null) {
-            log.debug("!!"+componentStr);
+    IF COMMA
+    list.add(component);
+    EXPR
 
-            Matcher matcher = pattern.matcher(componentStr);
-            if (!matcher.matches()) {
-                log.debug("continue");
-                continue;
-            }
+    IF OPEN BRACKET
+            EXPR
+    IF CLOSE BRACKET
+    component.add();
+    */
 
-            if (component == null) {
-                component = new Component(matcher.group(1));
-            } else {
-                component.add(new Component(matcher.group(1)));
-            }
+    private Component parseComponentExpression(String expression) {
+        return parseComponentExpression(null, expression);
+    }
 
 
-            if (StringUtils.isNoneEmpty(matcher.group(3))) { // subgroup
-                log.debug("foo");
-                String subExpr = matcher.group(3);
-                component.add(parseComponentExpression(subExpr));
-            }
-            log.debug("hasNext:"+scanner.hasNext(pattern));
+    private Component parseComponentExpression(Component parent, String expression) {
+        String expr = expression;
+
+        Matcher matcher = WORD.matcher(expr);
+        if (!matcher.matches()) {
+            return null;
         }
+
+        String word = matcher.group(1);
+
+        Component component = new Component(word);
+        if (parent != null) {
+            parent.add(component);
+        }
+
+        expr = expr.substring(word.length());
+
+        matcher = OPEN_BRACKET.matcher(expr);
+        if (matcher.matches()) {
+
+            expr = expr.substring(matcher.group(1).length());
+            matcher = SUB_EXPRESSION.matcher(expr);
+            if (matcher.matches()) {
+                String subExpression = matcher.group(1);
+                parseComponentExpression(component, subExpression);
+                expr = expr.substring(subExpression.length());
+            }
+
+            matcher = CLOSE_BRACKET.matcher(expr);
+            if (!matcher.matches()) {
+                return null;
+            }
+            expr = expr.substring(matcher.group(1).length());
+        }
+
+        matcher = COMMA.matcher(expr);
+        if (matcher.matches()) {
+            expr = expr.substring(matcher.group(1).length());
+            parseComponentExpression(parent, expr);
+        }
+
         return component;
     }
 
@@ -140,6 +175,7 @@ public class Route {
             }
         }
 
+        log.debug("page construct "+pageConstruct);
         page = parseComponentExpression(pageConstruct);
     }
 
