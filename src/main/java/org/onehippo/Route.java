@@ -11,11 +11,6 @@ import java.util.regex.Pattern;
 public class Route {
 
     final static Logger log = Logger.getLogger(Route.class);
-    public static final Pattern WORD = Pattern.compile("^([A-Za-z]+).*");
-    public static final Pattern COMMA = Pattern.compile("^(\\s*,\\s*).*");
-    public static final Pattern OPEN_BRACKET = Pattern.compile("^(\\s*\\(\\s*).*");
-    public static final Pattern SUB_EXPRESSION = Pattern.compile("(.*\\s*)\\)[^\\)]*$");
-    public static final Pattern CLOSE_BRACKET = Pattern.compile("^(\\s*\\)\\s*).*");
 
     private String urlMatcher;
 
@@ -27,18 +22,16 @@ public class Route {
 
     private List<Parameter> parameters = new LinkedList<Parameter>();
 
-    public class Parameter {
-        public String name;
-        public String type;
-    }
+    public static class Component {
 
-    public class Component {
         private String name;
         private List<Component> components;
+        private HSTScaffold scaffold;
 
         public Component(String name) {
             this.name = name;
             this.components = new ArrayList<Component>();
+            this.scaffold = HSTScaffold.instance();
         }
 
         public String getName() {
@@ -50,14 +43,14 @@ public class Route {
         }
 
         public String getTemplate() {
-            String projectDir = HSTScaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
-            String templatePath = HSTScaffold.getConfig().getProperty(HSTScaffold.TEMPLATE_PATH);
+            String projectDir = scaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
+            String templatePath = scaffold.getConfig().getProperty(HSTScaffold.TEMPLATE_PATH);
             return projectDir+templatePath+name;
         }
 
         public String getJavaClass() {
-            String projectDir = HSTScaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
-            String javaComponentPath = HSTScaffold.getConfig().getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
+            String projectDir = scaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
+            String javaComponentPath = scaffold.getConfig().getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
             return projectDir+javaComponentPath+name;
         }
 
@@ -74,7 +67,13 @@ public class Route {
         }
     }
 
+    public class Parameter {
+        public String name;
+        public String type;
+    }
+
     public Route(String urlMatcher, String contentPath, String pageConstruct) {
+        log.debug("new route "+urlMatcher+", "+contentPath+", "+pageConstruct);
         this.urlMatcher = urlMatcher;
         this.contentPath = contentPath;
         this.pageConstruct = pageConstruct;
@@ -82,73 +81,6 @@ public class Route {
         build();
     }
 
-
-    /*
-    test(foo, bar(baz, blue), duba(dabi, du))
-    test(foo, bar(baz, blue)
-
-    EXPR
-            WORD
-    comp
-
-    IF COMMA
-    list.add(component);
-    EXPR
-
-    IF OPEN BRACKET
-            EXPR
-    IF CLOSE BRACKET
-    component.add();
-    */
-
-    private Component parseComponentExpression(String expression) {
-        return parseComponentExpression(null, expression);
-    }
-
-
-    private Component parseComponentExpression(Component parent, String expression) {
-        String expr = expression;
-
-        Matcher matcher = WORD.matcher(expr);
-        if (!matcher.matches()) {
-            return null;
-        }
-
-        String word = matcher.group(1);
-
-        Component component = new Component(word);
-        if (parent != null) {
-            parent.add(component);
-        }
-
-        expr = expr.substring(word.length());
-
-        matcher = OPEN_BRACKET.matcher(expr);
-        if (matcher.matches()) {
-
-            expr = expr.substring(matcher.group(1).length());
-            matcher = SUB_EXPRESSION.matcher(expr);
-            if (matcher.matches()) {
-                String subExpression = matcher.group(1);
-                parseComponentExpression(component, subExpression);
-                expr = expr.substring(subExpression.length());
-            }
-
-            matcher = CLOSE_BRACKET.matcher(expr);
-            if (!matcher.matches()) {
-                return null;
-            }
-            expr = expr.substring(matcher.group(1).length());
-        }
-
-        matcher = COMMA.matcher(expr);
-        if (matcher.matches()) {
-            expr = expr.substring(matcher.group(1).length());
-            parseComponentExpression(parent, expr);
-        }
-
-        return component;
-    }
 
     private void build() {
         log.info("build route "+urlMatcher);
@@ -176,7 +108,7 @@ public class Route {
         }
 
         log.debug("page construct "+pageConstruct);
-        page = parseComponentExpression(pageConstruct);
+        page = ComponentParser.parse(pageConstruct);
     }
 
     public Component getPage() {

@@ -1,13 +1,12 @@
 package org.onehippo;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HSTScaffold {
@@ -22,19 +21,39 @@ public class HSTScaffold {
 
     public static final String JAVA_COMPONENT_PATH = "JAVA_COMPONENT_PATH";
 
+    public static final Pattern COMMENT = Pattern.compile("^(\\s*)#.*");
+    public static final Pattern URL = Pattern.compile("^(\\s*)(/[^\\s]*/?)*");
+    public static final Pattern CONTENT = Pattern.compile("^(\\s*)(/[^\\s]*/?)*");
+    public static final Pattern PAGE = Pattern.compile("([\\w\\(\\),\\s]+)");
+
     private static HSTScaffold scaffold;
 
-    private List<Route> routes;
+    private List<Route> routes = new ArrayList<Route>();
+
+    private Properties properties;
+
+    HSTScaffold() {
+        properties = new Properties();
+        try {
+            final InputStream stream = this.getClass().getResourceAsStream("/scaffold.properties");
+            log.debug("stream "+stream);
+            properties.load(stream);
+        } catch (IOException e) {
+            log.error("Error loading properties");
+        }
+        // todo check config from parameter
+        read(new InputStreamReader(this.getClass().getResourceAsStream("/scaffold.hst")));
+    }
 
     public List<Route> getRoutes() {
         return routes;
     }
 
-    public void read(File config) {
+    public void read(Reader configReader) {
         try {
             StringBuilder configBuilder = new StringBuilder();
 
-            BufferedReader reader = new BufferedReader(new FileReader(config));
+            BufferedReader reader = new BufferedReader(configReader);
             char [] buffer = new char[1024];
             while (reader.read(buffer) > 0) {
                 configBuilder.append(buffer);
@@ -50,44 +69,57 @@ public class HSTScaffold {
 
     public void read(String config) {
 
+        // *name, :id
+        // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
         Scanner scanner = new Scanner(config);
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
-            Scanner lineScanner = new Scanner(line);
-            if (lineScanner.hasNext(Pattern.compile("^\\s*#"))) {
-                break;
-            }
-
-            // *name, :id
-            // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
-            Pattern urlPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
-            if (!lineScanner.hasNext(urlPattern)) {
-                log.warn("Invalid route: "+line);
+            Matcher matcher = COMMENT.matcher(line);
+            if (matcher.matches()) {
+                log.debug("skip line "+line);
                 continue;
             }
-            String urlMatcher = lineScanner.next(urlPattern);
 
-            Pattern contentPattern = Pattern.compile("\\s*(/[^/\\s]]/?)+");
-            if (!lineScanner.hasNext(contentPattern)) {
-                log.warn("Invalid route: "+line);
+            matcher = URL.matcher(line);
+            if (!matcher.find()) {
+                log.warn("Invalid route, url: "+line);
                 continue;
             }
-            String contentPath = lineScanner.next(contentPattern);
-
-            Pattern pagePattern = Pattern.compile("[\\w\\(\\),\\s]+");
-            if (!lineScanner.hasNext(pagePattern)) {
-                log.warn("Invalid route: "+line);
+            String url = matcher.group(2);
+            log.debug("url: "+url);
+            if (StringUtils.isEmpty(url)) {
                 continue;
             }
-            String pageConstruct = lineScanner.next(pagePattern);
 
-            routes.add(new Route(urlMatcher, contentPath, pageConstruct));
+            line = line.substring(matcher.group(1).length()+matcher.group(2).length());
+
+            matcher = CONTENT.matcher(line);
+            if (!matcher.find()) {
+                log.warn("Invalid route, content: "+line);
+                continue;
+            }
+            String content = matcher.group(2);
+            log.debug("content: "+content);
+
+            if (StringUtils.isEmpty(content)) {
+                continue;
+            }
+            line = line.substring(matcher.group(1).length()+matcher.group(2).length());
+
+            matcher = PAGE.matcher(line);
+            if (!matcher.find()) {
+                log.warn("Invalid route, page: "+line);
+                continue;
+            }
+            String page = matcher.group(1);
+
+            routes.add(new Route(url, content, page));
         }
 
     }
 
-    public static Properties getConfig() {
+    public Properties getConfig() {
         Properties properties = new Properties();
         properties.put(PROJECT_DIR, "");
         properties.put(TEMPLATE_PATH, "");
@@ -99,7 +131,7 @@ public class HSTScaffold {
         if (scaffold == null) {
             scaffold = new HSTScaffold();
         }
-        // todo load properties
+
         return scaffold;
     }
 

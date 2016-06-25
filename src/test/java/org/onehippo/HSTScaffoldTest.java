@@ -65,12 +65,6 @@ public class HSTScaffoldTest extends TestCase {
 
         Route.Component page = route.getPage();
         List<Route.Component> components = page.getComponents();
-        log.debug("components: "+components.size());
-
-        log.debug("component childs ");
-        for (Route.Component component : components) {
-            log.debug("child "+component.getName());
-        }
 
         assertTrue(components.size() == 3);
 
@@ -83,21 +77,21 @@ public class HSTScaffoldTest extends TestCase {
 //        assertTrue("/test/path/HeaderComponent.java".equals(header.getTemplate()));
     }
 
-// todo activate tests
+    public void testScaffoldRoutes() {
+        HSTScaffold scaffold = HSTScaffold.instance();
+        List<Route> routes = scaffold.getRoutes();
+        assertEquals(routes.size(), 5);
+    }
 
-//    public void testScaffoldRoutes() {
-//        HSTScaffold scaffold = HSTScaffold.instance();
-//        List<Route> routes = scaffold.getRoutes();
-//        assertEquals(routes.length(), 5);
-//    }
-//
-//    public void testUrlParameter() {
-//        Scaffold scaffold = Scaffold.instance();
-//        List<Route> routes = scaffold.getRoutes();
-//        Map<String,String> urlParameters = routes.get(3).getUrlMatcher().getParameters();
-//        String type = urlParameters.get("id");
-//        assertEquals(type, "String");
-//    }
+    public void testUrlParameter() {
+        HSTScaffold scaffold = HSTScaffold.instance();
+        List<Route> routes = scaffold.getRoutes();
+        List<Route.Parameter> urlParameters = routes.get(3).getParameters();
+        String type = urlParameters.get(0).type;
+        assertEquals(type, "String");
+    }
+
+// todo activate tests
 //
 //    public void testWildcardUrlParameter() {
 //        Scaffold scaffold = Scaffold.instance();
