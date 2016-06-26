@@ -57,7 +57,7 @@ public class HSTScaffoldTest extends TestCase {
     }
 
     public void testRoute() {
-        Route route = new Route("/text/*path",       "/contact/path:String",    "text(header,main(banner, textInner),footer)");
+        Route route = new Route("       /text/*path ",       "    /contact/path:String ",    "  text(header,main(banner, textInner),footer)  ");
 
         List<Route.Parameter> parameters = route.getParameters();
         log.debug(parameters.get(0));
@@ -91,16 +91,14 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals(type, "String");
     }
 
-// todo activate tests
-//
-//    public void testWildcardUrlParameter() {
-//        Scaffold scaffold = Scaffold.instance();
-//        List<Route> routes = scaffold.getRoutes();
-//        Map<String,String> urlParameters = routes.get(4).getUrlMatcher().getParameters();
-//        String type = urlParameters.get("path");
-//        assertEquals(type, "String");
-//    }
-//
+    public void testWildcardUrlParameter() {
+        HSTScaffold scaffold = HSTScaffold.instance();
+        List<Route> routes = scaffold.getRoutes();
+        List<Route.Parameter> urlParameters = routes.get(4).getParameters();
+        String type = urlParameters.get(0).type;
+        assertEquals(type, "String");
+    }
+
 //    public void testPages() {
 //        Scaffold scaffold = Scaffold.instance();
 //        List<Route> routes = scaffold.getRoutes();

@@ -31,7 +31,7 @@ public class Route {
         public Component(String name) {
             this.name = name;
             this.components = new ArrayList<Component>();
-            this.scaffold = HSTScaffold.instance();
+//            this.scaffold = HSTScaffold.instance();
         }
 
         public String getName() {
@@ -74,8 +74,8 @@ public class Route {
 
     public Route(String urlMatcher, String contentPath, String pageConstruct) {
         log.debug("new route "+urlMatcher+", "+contentPath+", "+pageConstruct);
-        this.urlMatcher = urlMatcher;
-        this.contentPath = contentPath;
+        this.urlMatcher = urlMatcher.trim();
+        this.contentPath = contentPath.trim();
         this.pageConstruct = pageConstruct;
 
         build();

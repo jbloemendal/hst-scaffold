@@ -23,10 +23,10 @@ component.add();
 */
 public class ComponentParser {
 
-    public static final Pattern WORD = Pattern.compile("^([A-Za-z]+).*");
+    public static final Pattern WORD = Pattern.compile("^(\\s*)([A-Za-z]+).*");
     public static final Pattern COMMA = Pattern.compile("^(\\s*,\\s*).*");
     public static final Pattern OPEN_BRACKET = Pattern.compile("^(\\s*\\(\\s*).*");
-    public static final Pattern SUB_EXPRESSION = Pattern.compile("(.*\\s*)\\)[^\\)]*$");
+    public static final Pattern SUB_EXPRESSION = Pattern.compile("(.*)\\)[^\\)]*$");
     public static final Pattern CLOSE_BRACKET = Pattern.compile("^(\\s*\\)\\s*).*");
 
     public static Route.Component parse(String expression) {
@@ -41,14 +41,14 @@ public class ComponentParser {
             return null;
         }
 
-        String word = matcher.group(1);
+        String word = matcher.group(2);
 
         Route.Component component = new Route.Component(word);
         if (parent != null) {
             parent.add(component);
         }
 
-        expr = expr.substring(word.length());
+        expr = expr.substring(matcher.group(1).length()+matcher.group(2).length());
 
         matcher = OPEN_BRACKET.matcher(expr);
         if (matcher.matches()) {
