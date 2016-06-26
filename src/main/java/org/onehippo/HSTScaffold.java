@@ -15,11 +15,14 @@ public class HSTScaffold {
 
     final public static String SCAFFOLD_DIR_NAME = ".scaffold";
 
-    public static final String PROJECT_DIR = "PROJECT_DIR";
+    public static final String PROJECT_DIR = "projectDir";
+    public static final String DEFAULT_PROJECT_DIR = ".";
 
-    public static final String TEMPLATE_PATH = "TEMPLATE_PATH";
+    public static final String TEMPLATE_PATH = "templatePath";
+    public static final String DEFAULT_TEMPLATE_PATH = "bootstrap/webfiles/src/main/resources";
 
-    public static final String JAVA_COMPONENT_PATH = "JAVA_COMPONENT_PATH";
+    public static final String JAVA_COMPONENT_PATH = "componentPath";
+    public static final String DEFAULT_COMPONENT_PATH = "site/src/main/java";
 
     public static final Pattern COMMENT = Pattern.compile("^(\\s*)#.*");
     public static final Pattern URL = Pattern.compile("^(\\s*)(/[^\\s]*/?)*");
@@ -30,9 +33,8 @@ public class HSTScaffold {
 
     private List<Route> routes = new ArrayList<Route>();
 
-    private Properties properties;
-
-    HSTScaffold() {
+    public static Properties properties;
+    {
         properties = new Properties();
         try {
             final InputStream stream = this.getClass().getResourceAsStream("/scaffold.properties");
@@ -41,7 +43,10 @@ public class HSTScaffold {
         } catch (IOException e) {
             log.error("Error loading properties");
         }
-        // todo check config from parameter
+    }
+
+    HSTScaffold() {
+        // todo load config from parameter
         read(new InputStreamReader(this.getClass().getResourceAsStream("/scaffold.hst")));
     }
 
@@ -117,14 +122,6 @@ public class HSTScaffold {
             routes.add(new Route(url, content, page));
         }
 
-    }
-
-    public Properties getConfig() {
-        Properties properties = new Properties();
-        properties.put(PROJECT_DIR, "");
-        properties.put(TEMPLATE_PATH, "");
-        properties.put(JAVA_COMPONENT_PATH, "");
-        return properties;
     }
 
     public static HSTScaffold instance() {

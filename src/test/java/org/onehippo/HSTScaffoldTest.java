@@ -71,10 +71,9 @@ public class HSTScaffoldTest extends TestCase {
         Route.Component main = components.get(1);
         assertTrue(main.getComponents().size() == 2);
 
-        // todo paths
         Route.Component header = components.get(0);
-//        assertTrue("/test/path/header.ftl".equals(header.getTemplate()));
-//        assertTrue("/test/path/HeaderComponent.java".equals(header.getTemplate()));
+        assertTrue((HSTScaffold.DEFAULT_PROJECT_DIR+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplate()));
+        assertTrue((HSTScaffold.DEFAULT_PROJECT_DIR+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getJavaClass()));
     }
 
     public void testScaffoldRoutes() {
@@ -99,27 +98,7 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals(type, "String");
     }
 
-//    public void testPages() {
-//        Scaffold scaffold = Scaffold.instance();
-//        List<Route> routes = scaffold.getRoutes();
-//        Page page = routes.get(0).getPage();
-//        List<Component> components = page.getComponents();
-//
-//        assertEquals(components.length(), 3);
-//
-//        Component main = components.get(1);
-//        assertEquals(main.getName(), "main");
-//
-//        components = main.getComponents();
-//
-//        assertEquals(components.length, 2);
-//
-//        Component component = components.get(1);
-//        assertEquals(component.getTemplate(), "/some/path/text.ftl");
-//        assertEquals(component.getJavaClass(), "/some/path/TextComponent.java");
-//    }
-//
-//
+
 //    private boolean validateComponentXml(Component component) throws XPathExpressionException {
 //        Document doc = TestUtils.loadXml("/path/to/components/containers.xml");
 //

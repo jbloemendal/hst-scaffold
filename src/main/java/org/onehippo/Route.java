@@ -25,13 +25,12 @@ public class Route {
     public static class Component {
 
         private String name;
+        private Component parent;
         private List<Component> components;
-        private HSTScaffold scaffold;
 
         public Component(String name) {
             this.name = name;
             this.components = new ArrayList<Component>();
-//            this.scaffold = HSTScaffold.instance();
         }
 
         public String getName() {
@@ -43,18 +42,28 @@ public class Route {
         }
 
         public String getTemplate() {
-            String projectDir = scaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
-            String templatePath = scaffold.getConfig().getProperty(HSTScaffold.TEMPLATE_PATH);
-            return projectDir+templatePath+name;
+            String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+            String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+
+            StringBuilder componentPath = new StringBuilder();
+            Component cursor = this;
+            while (cursor != null) {
+                componentPath.insert(0, cursor.getName());
+                componentPath.insert(0, "/");
+                cursor = (cursor.parent);
+            }
+
+            return projectDir+"/"+templatePath+componentPath.toString()+".ftl";
         }
 
         public String getJavaClass() {
-            String projectDir = scaffold.getConfig().getProperty(HSTScaffold.PROJECT_DIR);
-            String javaComponentPath = scaffold.getConfig().getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
-            return projectDir+javaComponentPath+name;
+            String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+            String javaComponentPath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
+            return projectDir+"/"+javaComponentPath+"/"+name.substring(0,1).toUpperCase()+name.substring(1)+"Component.java";
         }
 
         public void add(Component component) {
+            component.parent = this;
             this.components.add(component);
         }
 
