@@ -72,6 +72,15 @@ public class HSTScaffold {
         }
     }
 
+    private boolean isComment(String line) {
+        Matcher matcher = COMMENT.matcher(line);
+        if (matcher.matches()) {
+            log.debug("skip line "+line);
+            return true;
+        }
+        return false;
+    }
+
     public void read(String config) {
 
         // *name, :id
@@ -80,36 +89,24 @@ public class HSTScaffold {
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
-            Matcher matcher = COMMENT.matcher(line);
-            if (matcher.matches()) {
-                log.debug("skip line "+line);
+            if (isComment(line)) {
                 continue;
             }
 
-            matcher = URL.matcher(line);
-            if (!matcher.find()) {
+            Matcher matcher = URL.matcher(line);
+            if (!matcher.find() || StringUtils.isEmpty(matcher.group(2))) {
                 log.warn("Invalid route, url: "+line);
                 continue;
             }
             String url = matcher.group(2);
-            log.debug("url: "+url);
-            if (StringUtils.isEmpty(url)) {
-                continue;
-            }
-
             line = line.substring(matcher.group(1).length()+matcher.group(2).length());
 
             matcher = CONTENT.matcher(line);
-            if (!matcher.find()) {
+            if (!matcher.find() || StringUtils.isEmpty(matcher.group(2))) {
                 log.warn("Invalid route, content: "+line);
                 continue;
             }
             String content = matcher.group(2);
-            log.debug("content: "+content);
-
-            if (StringUtils.isEmpty(content)) {
-                continue;
-            }
             line = line.substring(matcher.group(1).length()+matcher.group(2).length());
 
             matcher = PAGE.matcher(line);
@@ -117,8 +114,8 @@ public class HSTScaffold {
                 log.warn("Invalid route, page: "+line);
                 continue;
             }
-            String page = matcher.group(1);
 
+            String page = matcher.group(1);
             routes.add(new Route(url, content, page));
         }
 

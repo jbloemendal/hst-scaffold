@@ -24,12 +24,9 @@ import java.util.regex.Pattern;
 /**
  * Unit test for HSTScaffold.
  */
-// TODO pseudo codes
 public class HSTScaffoldTest extends TestCase {
 
     final static Logger log = Logger.getLogger(HSTScaffold.class);
-
-    public static String PROJECT_DIR = "."; //todo
 
     /**
      * Create the test case
@@ -98,6 +95,7 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals(type, "String");
     }
 
+// TODO pseudo codes
 
 //    private boolean validateComponentXml(Component component) throws XPathExpressionException {
 //        Document doc = TestUtils.loadXml("/path/to/components/containers.xml");
