@@ -5,29 +5,22 @@ HST-Scaffold
 
 Scaffold your projects Hippo Site Toolkit configuration from text file.
 
-Ideas / Notes
+Build
+```
+mvn clean verify
+mv hst-scaffold/target/hsd-jar-with-dependencies.jar hsd.jar
+```
 
-Command Line Client
-- develop tdd
-- convention over configuration
-- adapt play/ruby/klein/sinatra style routing configuration
+Usage:
+```
+java -jar hsd.jar [options] [args]
 
-- https://commons.apache.org/proper/commons-cli/
+Options
+-h     --help               Show help
+-b     --build              Build configuration from scaffold.
+-c     --configuration      Custom configuration file.
+-u     --update             Update configuration from scaffold
+-s     --scafold            Build scaffold from existing project configuration (reverse).
+-r     --rollback           Rollback configuration changes.
 
-- scaffold templates (mustache/freemarker ?) (java components, ftls, xml)
-  - custom templates, e.g. .scaffold folder overrides?
-
-- automatic creates sitemap, components, pages, templates
-  - document types, beans ???
-
-- automatic template 'include' generation
-
-- update? force regeneration? only create new components?
-
-- how to handle existing project structures?
-    - configuration
-
-Project Structure e.g.: ?
-/bootstrap/configuration/src/main/resources/hst
-/bootstrap/webfiles/src/main/resources/site/freemarker
-/site/src/main/java
+```

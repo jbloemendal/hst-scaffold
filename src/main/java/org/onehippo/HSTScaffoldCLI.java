@@ -27,7 +27,9 @@ public class HSTScaffoldCLI {
 
             // parse the command line arguments
             CommandLine line = parser.parse(options, args);
-
+            if (line.hasOption("h")) {
+                log.info(options.toString());
+            }
             // todo invoke scaffold build, update, rollback
 
             // todo print changed / created files (^M/^C)
