@@ -3,23 +3,13 @@ package org.onehippo;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.apache.log4j.Level;
+import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
-import java.io.*;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.regex.Pattern;
 
 /**
  * Unit test for HSTScaffold.
@@ -57,7 +47,7 @@ public class HSTScaffoldTest extends TestCase {
         Route route = new Route("       /text/*path ",       "    /contact/path:String ",    "  text(header,main(banner, textInner),footer)  ");
 
         List<Route.Parameter> parameters = route.getParameters();
-        log.debug(parameters.get(0));
+        log.debug(""+parameters.get(0));
         assertTrue(parameters.get(0).name.equals("path"));
 
         Route.Component page = route.getPage();
@@ -95,8 +85,17 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals(type, "String");
     }
 
-// TODO pseudo codes
+    public void testValidateComponentXml() {
+        try {
+            Node hst = JcrMockUp.mockJcrNode("/hst.xml");
+            log.debug("hst: "+hst.getName());
+            assertTrue("hst:hst".equals(hst.getName()));
+        } catch (RepositoryException e) {
+            log.error("Error validating component xml.", e);
+        }
+    }
 
+// TODO pseudo codes
 //    private boolean validateComponentXml(Component component) throws XPathExpressionException {
 //        Document doc = TestUtils.loadXml("/path/to/components/containers.xml");
 //
