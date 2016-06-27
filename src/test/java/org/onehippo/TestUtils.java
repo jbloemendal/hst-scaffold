@@ -37,26 +37,29 @@ public class TestUtils {
         return hashes;
     }
 
-    public static boolean hashesContained(Map<String, String> dir1, Map<String, String> dir2) {
+    public static boolean hashesChanged(Map<String, String> dir1, Map<String, String> dir2) {
         for (Map.Entry<String, String> entry : dir1.entrySet()) {
             String filePath = entry.getKey();
 
             if (!dir2.containsKey(filePath)) {
-                return false;
+                log.debug("dir2 doesn't contain file "+filePath);
+                return true;
             }
             if (!entry.getValue().equals(dir2.get(filePath))) {
-                return false;
+                log.debug(filePath+": checksum changed");
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public static boolean dirChanged(Map<String, String> dir1, Map<String, String> dir2) {
         if (dir1.size() != dir2.size()) {
-            return false;
+            log.debug("amount files vary");
+            return true;
         }
 
-        return hashesContained(dir1, dir2) && hashesContained(dir2, dir1);
+        return hashesChanged(dir1, dir2) && hashesChanged(dir2, dir1);
     }
 
     public Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {

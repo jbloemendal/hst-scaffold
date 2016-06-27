@@ -30,6 +30,7 @@ public class HSTScaffold {
     public static final Pattern PAGE = Pattern.compile("([\\w\\(\\),\\s]+)");
 
     private static HSTScaffold scaffold;
+    private ScaffoldBuilder builder;
 
     private List<Route> routes = new ArrayList<Route>();
 
@@ -82,7 +83,6 @@ public class HSTScaffold {
     }
 
     public void read(String config) {
-
         // *name, :id
         // /text/*path       /contact/path:String    text(header,main(banner, text),footer)
         Scanner scanner = new Scanner(config);
@@ -119,6 +119,28 @@ public class HSTScaffold {
             routes.add(new Route(url, content, page));
         }
 
+    }
+
+    public void setBuilder(ScaffoldBuilder builder) {
+        this.builder = builder;
+    }
+
+    public void dryRun() {
+        if (this.builder != null) {
+            this.builder.dryRun();
+        }
+    }
+
+    public void build() {
+        if (this.builder != null) {
+            this.builder.build();
+        }
+    }
+
+    public void rollback() {
+        if (this.builder != null) {
+            this.builder.rollback();
+        }
     }
 
     public static HSTScaffold instance() {

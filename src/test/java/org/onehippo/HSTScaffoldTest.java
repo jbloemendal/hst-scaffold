@@ -5,11 +5,17 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit test for HSTScaffold.
@@ -17,6 +23,7 @@ import java.util.List;
 public class HSTScaffoldTest extends TestCase {
 
     final static Logger log = Logger.getLogger(HSTScaffold.class);
+    private File projectDir;
 
     /**
      * Create the test case
@@ -27,6 +34,7 @@ public class HSTScaffoldTest extends TestCase {
         super(testName);
 
         HSTScaffold.instance();
+        projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
     }
 
     /**
@@ -59,8 +67,9 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue(main.getComponents().size() == 2);
 
         Route.Component header = components.get(0);
-        assertTrue((HSTScaffold.DEFAULT_PROJECT_DIR+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplate()));
-        assertTrue((HSTScaffold.DEFAULT_PROJECT_DIR+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getJavaClass()));
+        String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplate()));
+        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getJavaClass()));
     }
 
     public void testScaffoldRoutes() {
@@ -85,151 +94,63 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals(type, "String");
     }
 
-    public void testValidateComponentXml() {
-        try {
-            Node hst = JcrMockUp.mockJcrNode("/hst.xml");
-            log.debug("hst: "+hst.getName());
-            assertTrue("hst:hst".equals(hst.getName()));
-        } catch (RepositoryException e) {
-            log.error("Error validating component xml.", e);
-        }
+    public void testDryRun() {
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        HSTScaffold scaffold = HSTScaffold.instance();
+
+        // persist data to dry run .scaffold/dryrun directory instead of project
+        scaffold.dryRun();
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
     }
 
-// TODO pseudo codes
-//    private boolean validateComponentXml(Component component) throws XPathExpressionException {
-//        Document doc = TestUtils.loadXml("/path/to/components/containers.xml");
+
+//    public void testRollback() {
+//        final Map<String, String> before = TestUtils.dirHash(projectDir);
 //
-//        //optional, but recommended
-//        //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-//        doc.getDocumentElement().normalize();
+//        HSTScaffold scaffold = HSTScaffold.instance();
 //
-//        XPathFactory xPathfactory = XPathFactory.newInstance();
-//        XPath xpath = xPathfactory.newXPath();
-//        XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
-//        NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+//        // todo backup all files which are going to be changed (versioned history, timestamp folders)
+//        scaffold.build();
 //
-//        if (nodeList.getLength() == 1) {
-//            Node node = nodeList.item(0);
-//            NodeList childNodes = node.getChildNodes();
+//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME).exists());
+//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history").exists());
 //
-//            // todo order
-//            // validate
-//            /*
-//            <sv:property sv:name="jcr:primaryType" sv:type="Name">
-//            <sv:value>hst:containeritemcomponent</sv:value>
-//            </sv:property>
-//            <sv:property sv:name="hst:componentclassname" sv:type="String">
-//            <sv:value>org.onehippo.cms7.essentials.components.EssentialsCarouselComponent</sv:value>
-//            </sv:property>
-//            <sv:property sv:name="hst:template" sv:type="String">
-//            <sv:value>essentials-carousel</sv:value>
-//            </sv:property>
-//            <sv:property sv:name="hst:xtype" sv:type="String">
-//            <sv:value>HST.Item</sv:value>
-//            </sv:property>
-//            */
+//        // todo backup edited files (manual changed files) (rollback - rollback)
+//        // todo warn user that he edited files, which we will revert (force option?)
+//        scaffold.rollback();
 //
-//            String javaClass = component.getJavaClass();
-//            String template = component.getTemplate();
+//        final Map<String, String> after = TestUtils.dirHash(projectDir);
 //
-//            Node child = childNodes.item(0);
-//            assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
-//                    && "hst:containeritemcomponent".equals(child.getFirstChild().getNodeValue()));
-//            if (javaClass != null) {
-//                child = childNodes.item(1);
-//                assertTrue("hst:componentclassname".equals(child.getAttributes().getNamedItem("sv:name"))
-//                        && javaClass.equals(child.getFirstChild().getNodeValue()));
-//            }
-//            if (template != null) {
-//                child = childNodes.item(2);
-//                assertTrue("hst:template".equals(child.getAttributes().getNamedItem("sv:name"))
-//                        && template.equals(child.getFirstChild().getNodeValue()));
-//            }
-//            // ?
-//            child = childNodes.item(3);
-//            assertTrue("hst:xtype".equals(child.getAttributes().getNamedItem("sv:name"))
-//                    && "HST.Item".equals(child.getFirstChild().getNodeValue()));
-//
-//        }
-//
-//        return true;
-//    }
-//
-//
-//    // TODO test actual scaffolding, xml, ftl, files
-//    public void testComponents() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        Scaffold scaffold = Scaffold.instance();
-//
-//        try {
-//            // todo create a backup of files which are changed
-//            scaffold.build();
-//
-//            for (Component component : component.getComponents()) {
-//                validateComponentXml(component);
-//            }
-//
-//        } catch (SAXException e) {
-//            log.error("Error testing components, parsing xml.", e);
-//        } catch (ParserConfigurationException e) {
-//            log.error("Error testing components, parser configuration error.", e);
-//        } catch (IOException e) {
-//            log.error("Error testing components, reading file.", e);
-//        } catch (XPathExpressionException e) {
-//            log.error("Error testing components, XPath expression", e);
-//        } finally {
-//            scaffold.rollback();
-//        }
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
 //        assertFalse(TestUtils.dirChanged(before, after));
 //    }
+
+
+//    public void testUpdateDryRun() {
+//        final Map<String, String> before = TestUtils.dirHash(projectDir);
 //
+//        HSTScaffold scaffold = HSTScaffold.instance();
 //
-//    public void testTemplates() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
+//        scaffold.build();
 //
-//        Scaffold scaffold = Scaffold.instance();
+//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME).exists());
 //
-//        try {
-//            scaffold.build();
+//        scaffold.addRoute(new Route("/dryrun", "dryrun", "dryrun(header,main(banner,text),footer)"));
 //
-//            File componentsFile = new File("components.xml");
-//            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-//            Document doc = dBuilder.parse(componentsFile);
+//        scaffold.dryRun();
 //
-//            //optional, but recommended
-//            //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-//            doc.getDocumentElement().normalize();
+//        assertTrue(dryRunUpdated); // TODO
 //
-//            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-//            try {
-//                Document doc = TestUtils.loadXml("/file/to/templates.xml");
-//                XPathFactory xPathfactory = XPathFactory.newInstance();
-//                XPath xpath = xPathfactory.newXPath();
+//        scaffold.rollback();
 //
-//                for (Template template : scaffold.getTemplates()) {
-//                    validateTemplate(doc, xpath, template);
-//                }
-//
-//            } catch (XPathExpressionException e) {
-//                log.error("Error testing templates, XPath expression error", e);
-//            }
-//        } finally {
-//            scaffold.rollback();
-//        }
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
+//        final Map<String, String> after = TestUtils.dirHash(projectDir);
 //        assertFalse(TestUtils.dirChanged(before, after));
 //    }
-//
-//    private void validateTemplate(Document doc, XPath xpath, Template template) throws XPathExpressionException {
-//        XPathExpression expr = xpath.compile(xpathString); // e. g.: "//sv:node[@name='carousel']"
-//        NodeList nodeList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-//
-//        if (nodeList.getLength() == 1) {
+
+
+    private void validateTemplate(Route.Component component) {
 //            /*
 //            <sv:node sv:name="base-top-menu">
 //            <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -240,23 +161,9 @@ public class HSTScaffoldTest extends TestCase {
 //            </sv:property>
 //            </sv:node>
 //            */
-//
-//            Node node = nodeList.item(0);
-//            NodeList childNodes = node.getChildNodes();
-//
-//            Node child = childNodes.item(0);
-//            assertTrue("jcr:primaryType".equals(child.getAttributes().getNamedItem("sv:name"))
-//                    && "hst:template".equals(child.getFirstChild().getNodeValue()));
-//
-//            child = childNodes.item(1);
-//            assertTrue("hst:renderpath".equals(child.getAttributes().getNamedItem("sv:name"))
-//                    && template.getRenderPath().equals(child.getFirstChild().getNodeValue()));
-//
-//            assertTrue((new File(template.getFile()).exists()));
-//        }
-//    }
-//
-//    private void testTemplateInclude(Component component) {
+    }
+
+    private void validateTemplateIncludes(Route.Component component) {
 //        Reader reader = new BufferedReader(new FileReader(new File((component.getTemplate()))));
 //        Scanner scanner = new Scanner(reader);
 //
@@ -265,99 +172,74 @@ public class HSTScaffoldTest extends TestCase {
 //        for (Component component : component.getComponents()) {
 //            testTemplateInclude(component);
 //        }
-//    }
-//
-//
-//    public void testTemplateIncludes() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        Scaffold scaffold = Scaffold.instance();
-//
-//        try {
-//            scaffold.build();
-//
-//            File componentsFile = new File("components.xml");
-//            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-//            Document doc = dBuilder.parse(componentsFile);
-//
-//            //optional, but recommended
-//            //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-//            doc.getDocumentElement().normalize();
-//
-//            // home(header,main(banner, text),footer)
-//            for (Page page : scaffold.getPages()) {
-//                List<Component> components = page.getComponents();
-//                for (Component component : components) {
-//                    // home template should contain header include, main include, footer include
-//                    testTemplateInclude(component);
-//                }
-//            }
-//        } catch(Exception e) {
-//            scaffold.rollback();
-//        }
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
-//        assertFalse(TestUtils.dirChanged(before, after));
-//    }
-//
-//
-//    public void testDryRun() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        Scaffold scaffold = Scaffold.instance();
-//
-//        // persist data to dry run .scaffold/dryrun directory instead of project
-//        scaffold.dryRun();
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
-//        assertFalse(TestUtils.dirChanged(before, after));
-//    }
-//
-//
-//    public void testRollback() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        Scaffold scaffold = Scaffold.instance();
-//
-//        // todo backup all files which are going to be changed (versioned history, timestamp folders)
-//        scaffold.build();
-//
-//        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME).exists());
-//        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME +"/history").exists());
-//
-//        // todo backup edited files (manual changed files) (rollback - rollback)
-//        // todo warn user that he edited files, which we will revert (force option?)
-//        scaffold.rollback();
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        assertFalse(TestUtils.dirChanged(before, after));
-//    }
-//
-//
-//    public void testUpdateDryRun() {
-//        final Map<String, String> before = TestUtils.dirHash(new File(PROJECT_DIR));
-//
-//        Scaffold scaffold = Scaffold.instance();
-//
-//        scaffold.build();
-//
-//        assertTrue(new File(new File(PROJECT_DIR), HSTScaffold.SCAFFOLD_DIR_NAME).exists());
-//
-//        scaffold.addRoute(new Route("/dryrun", "dryrun", "dryrun(header,main(banner,text),footer)"));
-//
-//        scaffold.dryRun();
-//
-//        assertTrue(dryRunUpdated); // TODO
-//
-//        scaffold.rollback();
-//
-//        final Map<String, String> after = TestUtils.dirHash(new File(PROJECT_DIR));
-//        assertFalse(TestUtils.dirChanged(before, after));
-//    }
-//
-//
+    }
+
+    private void validateJavaComponent(Route.Component component) {
+
+    }
+
+    private boolean validateComponent(Route.Component component) throws XPathExpressionException {
+        /*
+        // validate
+        <sv:property sv:name="jcr:primaryType" sv:type="Name">
+        <sv:value>hst:containeritemcomponent</sv:value>
+        </sv:property>
+        <sv:property sv:name="hst:componentclassname" sv:type="String">
+        <sv:value>org.onehippo.cms7.essentials.components.EssentialsCarouselComponent</sv:value>
+        </sv:property>
+        <sv:property sv:name="hst:template" sv:type="String">
+        <sv:value>essentials-carousel</sv:value>
+        </sv:property>
+        <sv:property sv:name="hst:xtype" sv:type="String">
+        <sv:value>HST.Item</sv:value>
+        </sv:property>
+        */
+        String javaClass = component.getJavaClass();
+        String template = component.getTemplate();
+
+        validateTemplate(component);
+        validateTemplateIncludes(component);
+        validateJavaComponent(component);
+
+        for (Route.Component child : component.getComponents()) {
+            if (!validateComponent(child)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    public void testComponents() {
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        HSTScaffold scaffold = null;
+        try {
+            scaffold = HSTScaffold.instance();
+
+            Node hst = JcrMockUp.mockJcrNode("/hst.xml");
+            scaffold.setBuilder(new RepositoryBuilder(hst));
+
+            scaffold.build();
+
+            for (Route route : scaffold.getRoutes()) {
+                validateComponent(route.getPage());
+            }
+
+        } catch (Exception e) {
+            log.error("Error testing components, XPath expression", e);
+        } finally {
+            if (scaffold != null) {
+                scaffold.rollback();
+            }
+        }
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
+    }
+
+
 //    public void testUpdate() {
 //        final Map<String, String> start = TestUtils.dirHash(new File(PROJECT_DIR));
 //

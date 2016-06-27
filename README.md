@@ -8,7 +8,7 @@ Scaffold your projects Hippo Site Toolkit configuration from text file.
 Build:
 ```
 mvn clean verify
-mv hst-scaffold/target/hsd-jar-with-dependencies.jar hsd.jar
+mv target/hsd-jar-with-dependencies.jar hsd.jar
 ```
 
 Example Scaffold (scaffold.hst):
@@ -32,7 +32,7 @@ Options
 -b     --build              Build configuration from scaffold.
 -c     --configuration      Custom configuration file.
 -u     --update             Update configuration from scaffold
--s     --scaffold            Build scaffold from existing project configuration (reverse).
+-s     --scaffold           Build scaffold from existing project configuration (reverse).
 -r     --rollback           Rollback Build / Update / Scaffold.
 
 ```

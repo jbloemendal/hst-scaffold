@@ -124,6 +124,14 @@ public class Route {
         return page;
     }
 
+    public String getUrl() {
+        return this.urlMatcher;
+    }
+
+    public String getContentPath() {
+        return this.contentPath;
+    }
+
     public List<Parameter> getParameters() {
         return parameters;
     }
