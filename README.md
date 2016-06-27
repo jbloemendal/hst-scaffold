@@ -15,12 +15,12 @@ Example Scaffold (scaffold.hst):
 ```
 #HST scaffold example
 
-#URL              CONTENTPATH             COMPONENTS
-/                 /home                   home(header,main(banner, text),footer) # home_page
-/simple           /simple                 simple                                 # simple_page
-/contact          /contact                text(header,main(banner, text),footer) # text_page
-/news/:id         /news/id:String         news(header,main(banner, news),footer) # news_page
-/text/*path       /contact/path:String    text(header,main(banner, text),footer) # text_page
+#URL              CONTENTPATH                   COMPONENTS
+/                 /home                         home(header,main(banner, text),footer) # home_page
+/simple           /simple                       simple                                 # simple_page
+/contact          /contact                      text(header,main(banner, text),footer) # text_page
+/news/:date/:id   /news/date:String/id:String   news(header,main(banner, news),footer) # news_page
+/text/*path       /text/path:String             text(header,main(banner, text),footer) # text_page
 ```
 
 Usage:
@@ -32,7 +32,7 @@ Options
 -b     --build              Build configuration from scaffold.
 -c     --configuration      Custom configuration file.
 -u     --update             Update configuration from scaffold
--s     --scafold            Build scaffold from existing project configuration (reverse).
--r     --rollback           Rollback configuration changes.
+-s     --scaffold            Build scaffold from existing project configuration (reverse).
+-r     --rollback           Rollback Build / Update / Scaffold.
 
 ```
