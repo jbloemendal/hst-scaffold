@@ -5,15 +5,11 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +65,7 @@ public class HSTScaffoldTest extends TestCase {
         Route.Component header = components.get(0);
         String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
         assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplate()));
-        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getJavaClass()));
+        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getPathJavaClass()));
     }
 
     public void testScaffoldRoutes() {
@@ -175,10 +171,10 @@ public class HSTScaffoldTest extends TestCase {
     }
 
     private void validateJavaComponent(Route.Component component) {
-
+        // java code
     }
 
-    private boolean validateComponent(Route.Component component) throws XPathExpressionException {
+    private boolean validateComponent(Node components, Route.Component component) throws XPathExpressionException, RepositoryException {
         /*
         // validate
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -194,15 +190,32 @@ public class HSTScaffoldTest extends TestCase {
         <sv:value>HST.Item</sv:value>
         </sv:property>
         */
-        String javaClass = component.getJavaClass();
-        String template = component.getTemplate();
+
+        if (!components.hasNode(component.getName())) {
+            return false;
+        }
+
+        Node componentNode = components.getNode(component.getName());
+        if (!componentNode.hasProperty("hst:componentclassname")) {
+            return false;
+        }
+        if (!component.getJavaClass().equals(componentNode.getProperty("hst:componentclassname").getValue().getString())) {
+            return false;
+        }
+        if (!component.getTemplate().equals(componentNode.getProperty("hst:template").getValue().getString())) {
+            return false;
+        }
 
         validateTemplate(component);
         validateTemplateIncludes(component);
         validateJavaComponent(component);
 
         for (Route.Component child : component.getComponents()) {
-            if (!validateComponent(child)) {
+            if (!componentNode.hasNode(child.getName())) {
+                return false;
+            }
+
+            if (!validateComponent(componentNode.getNode(child.getName()), child)) {
                 return false;
             }
         }
@@ -223,10 +236,12 @@ public class HSTScaffoldTest extends TestCase {
 
             scaffold.build();
 
-            for (Route route : scaffold.getRoutes()) {
-                validateComponent(route.getPage());
-            }
+            String projectHstNodeName = HSTScaffold.properties.getProperty("projectHstNodeName");
+            Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
 
+            for (Route route : scaffold.getRoutes()) {
+                validateComponent(components, route.getPage());
+            }
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
         } finally {

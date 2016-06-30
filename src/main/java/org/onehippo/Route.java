@@ -57,6 +57,11 @@ public class Route {
         }
 
         public String getJavaClass() {
+            // todo
+            return "Component.java";
+        }
+
+        public String getPathJavaClass() {
             String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
             String javaComponentPath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
             return projectDir+"/"+javaComponentPath+"/"+name.substring(0,1).toUpperCase()+name.substring(1)+"Component.java";

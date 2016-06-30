@@ -15,6 +15,8 @@ public class HSTScaffold {
 
     final public static String SCAFFOLD_DIR_NAME = ".scaffold";
 
+    public static final String PROJECT_HST_NODE_NAME = "myhippoproject";
+
     public static final String PROJECT_DIR = "projectDir";
     public static final String DEFAULT_PROJECT_DIR = ".";
 
