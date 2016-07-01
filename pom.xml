@@ -114,7 +114,7 @@
               <mainClass>org.onehippo.HSTScaffoldCLI</mainClass>
             </manifest>
           </archive>
-          <finalName>hsd</finalName>
+          <finalName>sfd</finalName>
 
         </configuration>
         <executions>

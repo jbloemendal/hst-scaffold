@@ -9,9 +9,11 @@ import org.apache.log4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.File;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * Unit test for HSTScaffold.
@@ -19,6 +21,10 @@ import java.util.Map;
 public class HSTScaffoldTest extends TestCase {
 
     final static Logger log = Logger.getLogger(HSTScaffold.class);
+    public static final String JCR_PRIMARY_TYPE = "jcr:primaryType";
+    public static final String HST_COMPONENTCLASSNAME = "hst:componentclassname";
+    public static final String HST_TEMPLATE = "hst:template";
+    public static final String HST_CONTAINERITEMCOMPONENT = "hst:containeritemcomponent";
     private File projectDir;
 
     /**
@@ -64,7 +70,7 @@ public class HSTScaffoldTest extends TestCase {
 
         Route.Component header = components.get(0);
         String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
-        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplate()));
+//todo        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplateFilePath()));
         assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getPathJavaClass()));
     }
 
@@ -146,35 +152,49 @@ public class HSTScaffoldTest extends TestCase {
 //    }
 
 
-    private void validateTemplate(Route.Component component) {
-//            /*
-//            <sv:node sv:name="base-top-menu">
-//            <sv:property sv:name="jcr:primaryType" sv:type="Name">
-//            <sv:value>hst:template</sv:value>
-//            </sv:property>
-//            <sv:property sv:name="hst:renderpath" sv:type="String">
-//            <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
-//            </sv:property>
-//            </sv:node>
-//            */
+    private boolean validateTemplate(Node hstSiteCnfRoot, Route.Component component) throws RepositoryException {
+      /*
+        <sv:node sv:name="base-top-menu">
+        <sv:property sv:name="jcr:primaryType" sv:type="Name">
+        <sv:value>hst:template</sv:value>
+        </sv:property>
+        <sv:property sv:name="hst:renderpath" sv:type="String">
+        <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
+        </sv:property>
+        </sv:node>
+        */
+        Node templates = hstSiteCnfRoot.getNode("hst:templates");
+
+        if (!templates.hasNode(component.getTemplateName())) {
+            return false;
+        }
+
+        Node template = templates.getNode(component.getTemplateName());
+        if (!template.getProperty("jcr:primaryType").equals("hst:template")) {
+            return false;
+        }
+        if (!template.getProperty("hst:renderpath").equals(component.getWebfilePath())) {
+            return false;
+        }
+
+        return true;
     }
 
-    private void validateTemplateIncludes(Route.Component component) {
-//        Reader reader = new BufferedReader(new FileReader(new File((component.getTemplate()))));
-//        Scanner scanner = new Scanner(reader);
-//
-//        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">")));
-//
-//        for (Component component : component.getComponents()) {
-//            testTemplateInclude(component);
-//        }
+    private void validateTemplateIncludes(Node hstSiteCnfRoot, Route.Component component) throws FileNotFoundException {
+        Reader reader = new BufferedReader(new FileReader(new File((component.getTemplateFilePath()))));
+
+        // webfile from project or project directory
+        Scanner scanner = new Scanner(reader);
+
+
+        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">")));
     }
 
-    private void validateJavaComponent(Route.Component component) {
+    private void validateJavaComponent(Node hstSiteCnfRoot, Route.Component component) {
         // java code
     }
 
-    private boolean validateComponent(Node components, Route.Component component) throws XPathExpressionException, RepositoryException {
+    private boolean validateComponent(Node hstSiteCnfRoot, Route.Component component) throws XPathExpressionException, RepositoryException, FileNotFoundException {
         /*
         // validate
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -191,31 +211,34 @@ public class HSTScaffoldTest extends TestCase {
         </sv:property>
         */
 
-        if (!components.hasNode(component.getName())) {
+        Node componentNode = hstSiteCnfRoot.getNode(component.getComponentPath());
+        if (componentNode == null) {
             return false;
         }
 
-        Node componentNode = components.getNode(component.getName());
-        if (!componentNode.hasProperty("hst:componentclassname")) {
+        if (!componentNode.hasProperty(JCR_PRIMARY_TYPE)
+                || !componentNode.getProperty(JCR_PRIMARY_TYPE).equals(HST_CONTAINERITEMCOMPONENT)) {
             return false;
         }
-        if (!component.getJavaClass().equals(componentNode.getProperty("hst:componentclassname").getValue().getString())) {
+        if (!componentNode.hasProperty(HST_COMPONENTCLASSNAME)
+                || !component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getValue().getString())) {
             return false;
         }
-        if (!component.getTemplate().equals(componentNode.getProperty("hst:template").getValue().getString())) {
+        if (!componentNode.hasProperty(HST_TEMPLATE)
+                || !component.getTemplateFilePath().equals(componentNode.getProperty(HST_TEMPLATE).getValue().getString())) {
             return false;
         }
 
-        validateTemplate(component);
-        validateTemplateIncludes(component);
-        validateJavaComponent(component);
+        validateTemplate(hstSiteCnfRoot, component);
+        validateTemplateIncludes(hstSiteCnfRoot, component);
+        validateJavaComponent(hstSiteCnfRoot, component);
 
         for (Route.Component child : component.getComponents()) {
             if (!componentNode.hasNode(child.getName())) {
                 return false;
             }
 
-            if (!validateComponent(componentNode.getNode(child.getName()), child)) {
+            if (!validateComponent(hstSiteCnfRoot, child)) {
                 return false;
             }
         }
@@ -232,15 +255,15 @@ public class HSTScaffoldTest extends TestCase {
             scaffold = HSTScaffold.instance();
 
             Node hst = JcrMockUp.mockJcrNode("/hst.xml");
-            scaffold.setBuilder(new RepositoryBuilder(hst));
 
+            scaffold.setBuilder(new RepositoryBuilder(hst));
             scaffold.build();
 
             String projectHstNodeName = HSTScaffold.properties.getProperty("projectHstNodeName");
-            Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
 
+            Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
             for (Route route : scaffold.getRoutes()) {
-                validateComponent(components, route.getPage());
+//                validateComponent(components, route.getPage());
             }
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);

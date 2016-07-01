@@ -41,19 +41,18 @@ public class Route {
             this.name = name;
         }
 
-        public String getTemplate() {
+        public String getTemplateFilePath() {
             String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
             String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+            return projectDir+"/"+templatePath+getComponentPath()+".ftl";
+        }
 
-            StringBuilder componentPath = new StringBuilder();
-            Component cursor = this;
-            while (cursor != null) {
-                componentPath.insert(0, cursor.getName());
-                componentPath.insert(0, "/");
-                cursor = (cursor.parent);
-            }
+        public String getWebfilePath() {
+            return ""+name+"ftl"; // todo
+        }
 
-            return projectDir+"/"+templatePath+componentPath.toString()+".ftl";
+        public String getTemplateName() {
+            return name;
         }
 
         public String getJavaClass() {
@@ -78,6 +77,19 @@ public class Route {
 
         public List<Component> getComponents() {
             return this.components;
+        }
+
+        public String getComponentPath() {
+            StringBuilder componentPath = new StringBuilder();
+            Component cursor = this;
+            while (cursor != null) {
+                componentPath.insert(0, cursor.getName());
+                cursor = (cursor.parent);
+                if (cursor != null) {
+                    componentPath.insert(0, "/");
+                }
+            }
+            return componentPath.toString();
         }
     }
 
