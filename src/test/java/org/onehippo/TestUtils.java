@@ -8,10 +8,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,11 +59,24 @@ public class TestUtils {
         return hashesChanged(dir1, dir2) && hashesChanged(dir2, dir1);
     }
 
-    public Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {
+    public static Document loadXml(String fileName) throws ParserConfigurationException, IOException, SAXException {
         File componentsFile = new File(fileName);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(componentsFile);
         return doc;
+    }
+
+    public static String readFile(String fileName) throws IOException {
+        Reader reader = new BufferedReader(new FileReader(new File(fileName)));
+
+        StringBuilder templateBuilder = new StringBuilder();
+
+        char[] buffer = new char[1024];
+        while (reader.read(buffer) != -1) {
+            templateBuilder.append(buffer);
+        }
+
+        return templateBuilder.toString();
     }
 }
