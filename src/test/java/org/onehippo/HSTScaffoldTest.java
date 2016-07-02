@@ -12,8 +12,6 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.regex.Pattern;
 
 /**
  * Unit test for HSTScaffold.
@@ -152,7 +150,7 @@ public class HSTScaffoldTest extends TestCase {
 //    }
 
 
-    private boolean validateTemplate(Node hstSiteCnfRoot, Route.Component component) throws RepositoryException {
+    private boolean isHstTemplateConfValid(Node hstSiteCnfRoot, Route.Component component) throws RepositoryException {
       /*
         <sv:node sv:name="base-top-menu">
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -180,21 +178,32 @@ public class HSTScaffoldTest extends TestCase {
         return true;
     }
 
-    private void validateTemplateIncludes(Node hstSiteCnfRoot, Route.Component component) throws FileNotFoundException {
-        Reader reader = new BufferedReader(new FileReader(new File((component.getTemplateFilePath()))));
+    private String readFile(String fileName) throws IOException {
+        Reader reader = new BufferedReader(new FileReader(new File(fileName)));
 
-        // webfile from project or project directory
-        Scanner scanner = new Scanner(reader);
+        StringBuilder templateBuilder = new StringBuilder();
 
+        char[] buffer = new char[1024];
+        while (reader.read(buffer) != -1) {
+            templateBuilder.append(buffer);
+        }
 
-        assertTrue(scanner.hasNext(Pattern.compile("<@hst.include ref=\""+component.getName()+"\">")));
+        return templateBuilder.toString();
     }
 
-    private void validateJavaComponent(Node hstSiteCnfRoot, Route.Component component) {
-        // java code
+    private boolean isTemplateIncludesValid(Node hstSiteCnfRoot, Route.Component component) throws IOException {
+        String template = readFile(component.getTemplateFilePath());
+        for (Route.Component child : component.getComponents()) {
+            if (template.contains("<@hst.include ref=\""+child.getName()+"\">")) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private boolean validateComponent(Node hstSiteCnfRoot, Route.Component component) throws XPathExpressionException, RepositoryException, FileNotFoundException {
+
+
+    private boolean validateComponent(Node hstSiteCnfRoot, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
         /*
         // validate
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -212,6 +221,27 @@ public class HSTScaffoldTest extends TestCase {
         */
 
         Node componentNode = hstSiteCnfRoot.getNode(component.getComponentPath());
+        if (!isHstComponentConfValid(component, componentNode)
+                || !isHstTemplateConfValid(hstSiteCnfRoot, component)
+                || !isTemplateIncludesValid(hstSiteCnfRoot, component)) {
+            return false;
+        }
+
+
+        for (Route.Component child : component.getComponents()) {
+            if (!componentNode.hasNode(child.getName())) {
+                return false;
+            }
+
+            if (!validateComponent(hstSiteCnfRoot, child)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isHstComponentConfValid(Route.Component component, Node componentNode) throws RepositoryException {
         if (componentNode == null) {
             return false;
         }
@@ -224,23 +254,13 @@ public class HSTScaffoldTest extends TestCase {
                 || !component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getValue().getString())) {
             return false;
         }
+
+        File javaFile = new File(component.getPathJavaClass());
+        assertTrue(javaFile.exists());
+
         if (!componentNode.hasProperty(HST_TEMPLATE)
                 || !component.getTemplateFilePath().equals(componentNode.getProperty(HST_TEMPLATE).getValue().getString())) {
             return false;
-        }
-
-        validateTemplate(hstSiteCnfRoot, component);
-        validateTemplateIncludes(hstSiteCnfRoot, component);
-        validateJavaComponent(hstSiteCnfRoot, component);
-
-        for (Route.Component child : component.getComponents()) {
-            if (!componentNode.hasNode(child.getName())) {
-                return false;
-            }
-
-            if (!validateComponent(hstSiteCnfRoot, child)) {
-                return false;
-            }
         }
 
         return true;
@@ -263,7 +283,7 @@ public class HSTScaffoldTest extends TestCase {
 
             Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
             for (Route route : scaffold.getRoutes()) {
-//                validateComponent(components, route.getPage());
+// todo           validateComponent(components, route.getPage());
             }
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
