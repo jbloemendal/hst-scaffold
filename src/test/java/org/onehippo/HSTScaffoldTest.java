@@ -203,8 +203,6 @@ public class HSTScaffoldTest extends TestCase {
         return true;
     }
 
-
-
     private boolean validateComponent(Node hstSiteCnfRoot, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
         /*
         // validate
@@ -305,6 +303,22 @@ public class HSTScaffoldTest extends TestCase {
 
 
     public boolean validateSitemap(Node sitemap, Route route) throws RepositoryException {
+        //        <?xml version="1.0" encoding="UTF-8"?>
+        //        <sv:node sv:name="_any_" xmlns:sv="http://www.jcp.org/jcr/sv/1.0">
+        //        <sv:property sv:name="jcr:primaryType" sv:type="Name">
+        //        <sv:value>hst:sitemapitem</sv:value>
+        //        </sv:property>
+        //        <sv:property sv:name="jcr:uuid" sv:type="String">
+        //        <sv:value>5734c9df-401c-4acc-99ef-ee64357fe348</sv:value>
+        //        </sv:property>
+        //        <sv:property sv:name="hst:componentconfigurationid" sv:type="String">
+        //        <sv:value>hst:pages/newslist</sv:value>
+        //        </sv:property>
+        //        <sv:property sv:name="hst:relativecontentpath" sv:type="String">
+        //        <sv:value>${parent}/${1}</sv:value>
+        //        </sv:property>
+        //        </sv:node>
+
         // e. g. /news/:date/:id or // /text/*path
         String urlMatcher = route.getUrl();
         // e. g. /news/date:String/id:String
@@ -318,15 +332,36 @@ public class HSTScaffoldTest extends TestCase {
         while (scanner.hasNext()) {
             String path = scanner.next();
             if (path.startsWith(":")) {
-                sitemapItem = sitemapItem.getNode("_default");
+                sitemapItem = sitemapItem.getNode("_default_");
             } else if (path.startsWith("*")) {
-                sitemapItem = sitemapItem.getNode("_any");
+                sitemapItem = sitemapItem.getNode("_any_");
             } else {
                 sitemapItem = sitemapItem.getNode(path);
             }
+
+            // todo add tests here as well
+
         }
 
-        // todo replace contentPath placeHolders and check if we see the contentPath
+        if (!sitemapItem.hasProperty("hst:componentconfigurationid")) {
+            return false;
+        }
+        if (!("hst:pages/"+route.getPage().getName()).equals(sitemapItem.getProperty("hst:componentconfigurationid").getString())) {
+            return false;
+        }
+        if (!sitemapItem.hasProperty("hst:relativecontentpath")) {
+            return false;
+        }
+
+        int index = 1;
+        for (Route.Parameter param : parameters) {
+            contentPath.replace(param.name+":"+param.type, "${"+index+"}");
+            index++;
+        }
+
+        if (!contentPath.substring(1).equals(sitemapItem.getProperty("hst:relativecontentpath").getString())) {
+            return false;
+        }
 
         return true;
     }
