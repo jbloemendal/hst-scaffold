@@ -19,6 +19,7 @@ public class HSTScaffold {
 
     public static final String PROJECT_DIR = "projectDir";
     public static final String DEFAULT_PROJECT_DIR = ".";
+    public static final String PROJECT_PACKAGE_NAME = "projectPackageName";
 
     public static final String TEMPLATE_PATH = "templatePath";
     public static final String DEFAULT_TEMPLATE_PATH = "bootstrap/webfiles/src/main/resources";
