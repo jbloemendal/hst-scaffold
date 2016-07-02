@@ -5,6 +5,7 @@
 #   git config --global core.excludesfile '~/.gitignore_global'
 
 myhippoproject/.idea
+myhippoproject/storage
 .idea
 .DS_Store
 target
