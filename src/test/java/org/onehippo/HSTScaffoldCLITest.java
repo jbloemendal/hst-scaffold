@@ -40,7 +40,7 @@ public class HSTScaffoldCLITest extends TestCase {
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    //    public void testRollback() {
+//    public void testRollback() {
 //        final Map<String, String> before = TestUtils.dirHash(projectDir);
 //
 //        HSTScaffold scaffold = HSTScaffold.instance();

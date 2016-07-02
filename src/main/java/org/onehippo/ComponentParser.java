@@ -8,18 +8,10 @@ import java.util.regex.Pattern;
 test(foo, bar(baz, blue), duba(dabi, du))
 test(foo, bar(baz, blue)
 
-EXPR
-        WORD
-comp
+Backus–Naur Form
 
-IF COMMA
-list.add(component);
-EXPR
-
-IF OPEN BRACKET
-        EXPR
-IF CLOSE BRACKET
-component.add();
+<expr> ::= <word>(<expr>)|<word>(<expr>), <expr>|<word>
+<word> ::= <character>|<word><character>
 */
 public class ComponentParser {
 

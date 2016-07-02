@@ -64,7 +64,7 @@ public class RepositoryBuilderTest extends TestCase {
         return true;
     }
 
-    private boolean isTemplateIncludesValid(Node hstSiteCnfRoot, Route.Component component) throws IOException {
+    private boolean areTemplateIncludesValid(Node hstSiteCnfRoot, Route.Component component) throws IOException {
         String template = TestUtils.readFile(component.getTemplateFilePath());
         for (Route.Component child : component.getComponents()) {
             if (template.contains("<@hst.include ref=\""+child.getName()+"\">")) {
@@ -94,7 +94,7 @@ public class RepositoryBuilderTest extends TestCase {
         Node componentNode = hstSiteCnfRoot.getNode(component.getComponentPath());
         if (!isHstComponentConfValid(component, componentNode)
                 || !isHstTemplateConfValid(hstSiteCnfRoot, component)
-                || !isTemplateIncludesValid(hstSiteCnfRoot, component)) {
+                || !areTemplateIncludesValid(hstSiteCnfRoot, component)) {
             return false;
         }
 
