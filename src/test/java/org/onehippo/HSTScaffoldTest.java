@@ -12,6 +12,8 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * Unit test for HSTScaffold.
@@ -75,7 +77,7 @@ public class HSTScaffoldTest extends TestCase {
     public void testScaffoldRoutes() {
         HSTScaffold scaffold = HSTScaffold.instance();
         List<Route> routes = scaffold.getRoutes();
-        assertEquals(routes.size(), 5);
+        assertEquals(6, routes.size());
     }
 
     public void testUrlParameter() {
@@ -83,15 +85,15 @@ public class HSTScaffoldTest extends TestCase {
         List<Route> routes = scaffold.getRoutes();
         List<Route.Parameter> urlParameters = routes.get(3).getParameters();
         String type = urlParameters.get(0).type;
-        assertEquals(type, "String");
+        assertEquals("String", type);
     }
 
     public void testWildcardUrlParameter() {
         HSTScaffold scaffold = HSTScaffold.instance();
         List<Route> routes = scaffold.getRoutes();
-        List<Route.Parameter> urlParameters = routes.get(4).getParameters();
+        List<Route.Parameter> urlParameters = routes.get(5).getParameters();
         String type = urlParameters.get(0).type;
-        assertEquals(type, "String");
+        assertEquals("String", type);
     }
 
     public void testDryRun() {
@@ -267,7 +269,7 @@ public class HSTScaffoldTest extends TestCase {
     }
 
 
-    public void testComponents() {
+    public void testRoutes() {
         final Map<String, String> before = TestUtils.dirHash(projectDir);
 
         HSTScaffold scaffold = null;
@@ -282,8 +284,12 @@ public class HSTScaffoldTest extends TestCase {
             String projectHstNodeName = HSTScaffold.properties.getProperty("projectHstNodeName");
 
             Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
+            Node sitemap = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemap");
+
             for (Route route : scaffold.getRoutes()) {
-// todo           validateComponent(components, route.getPage());
+                // todo
+                // validateSitemap(sitemap, route);
+                // validateComponent(components, route.getPage());
             }
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
@@ -295,6 +301,34 @@ public class HSTScaffoldTest extends TestCase {
 
         final Map<String, String> after = TestUtils.dirHash(projectDir);
         assertFalse(TestUtils.dirChanged(before, after));
+    }
+
+
+    public boolean validateSitemap(Node sitemap, Route route) throws RepositoryException {
+        // e. g. /news/:date/:id or // /text/*path
+        String urlMatcher = route.getUrl();
+        // e. g. /news/date:String/id:String
+        String contentPath = route.getContentPath();
+        List<Route.Parameter> parameters = route.getParameters();
+
+        Scanner scanner = new Scanner(urlMatcher);
+        scanner.useDelimiter(Pattern.compile("/"));
+
+        Node sitemapItem = sitemap;
+        while (scanner.hasNext()) {
+            String path = scanner.next();
+            if (path.startsWith(":")) {
+                sitemapItem = sitemapItem.getNode("_default");
+            } else if (path.startsWith("*")) {
+                sitemapItem = sitemapItem.getNode("_any");
+            } else {
+                sitemapItem = sitemapItem.getNode(path);
+            }
+        }
+
+        // todo replace contentPath placeHolders and check if we see the contentPath
+
+        return true;
     }
 
 
