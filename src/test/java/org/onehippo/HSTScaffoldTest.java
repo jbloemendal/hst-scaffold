@@ -96,16 +96,4 @@ public class HSTScaffoldTest extends TestCase {
         assertEquals("String", type);
     }
 
-    public void testDryRun() {
-        final Map<String, String> before = TestUtils.dirHash(projectDir);
-
-        HSTScaffold scaffold = HSTScaffold.instance();
-
-        // persist data to dry run .scaffold/dryrun directory instead of project
-        scaffold.dryRun();
-
-        final Map<String, String> after = TestUtils.dirHash(projectDir);
-        assertFalse(TestUtils.dirChanged(before, after));
-    }
-
 }
