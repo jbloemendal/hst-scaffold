@@ -130,13 +130,23 @@ public class HSTScaffold {
 
     public void dryRun() {
         if (this.builder != null) {
-            this.builder.dryRun();
+            try {
+                this.builder.dryRun();
+            } catch (Exception e) {
+                log.error("Error doing dryRun, rolling back.", e);
+                this.builder.rollback();
+            }
         }
     }
 
     public void build() {
         if (this.builder != null) {
-            this.builder.build();
+            try {
+                this.builder.build();
+            } catch (Exception e) {
+                log.error("Error building scaffold, rolling back.", e);
+                this.builder.rollback();
+            }
         }
     }
 
