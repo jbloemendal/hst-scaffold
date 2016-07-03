@@ -65,8 +65,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(this.getClass().getResource("/Component.java.mustache").getFile());
 
-        Writer writer=new PrintWriter(System.out);;
-
+        Writer writer= new PrintWriter(System.out);;
         if (!dryRun) {
             File javaClassFile = new File(component.getPathJavaClass());
             if (javaClassFile.exists()) {
@@ -88,12 +87,14 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(this.getClass().getResource("/template.ftl.mustache").getFile());
 
-        Writer writer;
-        if (dryRun) {
-            writer = new PrintWriter(System.out); // log?
-        } else {
-            // todo if file exists, backup file
-            writer = new FileWriter(new File(component.getTemplateFilePath()));
+        Writer writer = new PrintWriter(System.out);
+        if (!dryRun) {
+            File templateFile = new File(component.getTemplateFilePath());
+            if (templateFile.exists()) {
+                log.info(String.format("Template file $1 already exists.", templateFile.getPath()));
+            } else {
+                writer = new FileWriter(templateFile);
+            }
         }
 
         mustache.execute(writer, new HashMap<String, Object>() {
