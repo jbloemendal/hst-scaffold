@@ -44,7 +44,7 @@ public class Route {
         public String getTemplateFilePath() {
             String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
             String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
-            return projectDir+"/"+templatePath+getComponentPath()+".ftl";
+            return projectDir+"/"+templatePath+"/"+getComponentPath()+".ftl";
         }
 
         public String getWebfilePath() {

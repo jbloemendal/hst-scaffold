@@ -27,7 +27,8 @@ public class ComponentParser {
 
     public static Route.Component parse(String expression) {
         log.debug(String.format("Parsing component expression %s", expression));
-        return parseComponentExpression(null, expression);
+        Route.Component root = parseComponentExpression(null, expression);
+        return root;
     }
 
     private static Route.Component parseComponentExpression(Route.Component parent, String expression) {
@@ -40,10 +41,8 @@ public class ComponentParser {
 
         String word = matcher.group(2);
 
-        log.debug(String.format("Component %s", word));
         Route.Component component = new Route.Component(word);
         if (parent != null) {
-            log.debug(String.format("Component %s add child %s", parent.getName(), component.getName()));
             parent.add(component);
         }
 

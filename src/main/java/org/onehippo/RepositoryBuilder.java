@@ -80,8 +80,11 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         Mustache mustache = mf.compile(this.getClass().getResource("/Component.java.mustache").getFile());
 
         Writer writer= new PrintWriter(System.out);;
+        File javaClassFile = new File(component.getPathJavaClass());
+
+        log.info(String.format("Build component %s java class %s", component.getName(), javaClassFile.getPath()));
+
         if (!dryRun) {
-            File javaClassFile = new File(component.getPathJavaClass());
             if (javaClassFile.exists()) {
                 log.info(String.format("Java component file %s alreday exists", javaClassFile.getPath()));
             } else {
@@ -102,8 +105,12 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         Mustache mustache = mf.compile(this.getClass().getResource("/template.ftl.mustache").getFile());
 
         Writer writer = new PrintWriter(System.out);
+
+        File templateFile = new File(component.getTemplateFilePath());
+        log.info(String.format("Build %s component template %s", component.getName(), templateFile.getPath()));
+
         if (!dryRun) {
-            File templateFile = new File(component.getTemplateFilePath());
+
             if (templateFile.exists()) {
                 log.info(String.format("Template file %s already exists.", templateFile.getPath()));
             } else {
