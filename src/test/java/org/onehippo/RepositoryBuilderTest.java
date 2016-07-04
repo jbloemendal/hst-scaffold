@@ -29,11 +29,11 @@ public class RepositoryBuilderTest extends TestCase {
      *
      * @param testName name of the test case
      */
-    public RepositoryBuilderTest(String testName) {
+    public RepositoryBuilderTest(String testName) throws IOException {
         super(testName);
 
-        HSTScaffold.instance();
-        projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
+        HSTScaffold.instance("./myhippoproject");
+        projectDir = new File("./myhippoproject");
     }
 
     private boolean isHstTemplateConfValid(Node hstSiteCnfRoot, Route.Component component) throws RepositoryException {
@@ -207,7 +207,7 @@ public class RepositoryBuilderTest extends TestCase {
 
         HSTScaffold scaffold = null;
         try {
-            scaffold = HSTScaffold.instance();
+            scaffold = HSTScaffold.instance("./myhippoproject");
 
             Node hst = JcrMockUp.mockJcrNode("/hst.xml");
 

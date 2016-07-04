@@ -32,11 +32,11 @@ public class HSTScaffoldTest extends TestCase {
      *
      * @param testName name of the test case
      */
-    public HSTScaffoldTest(String testName) {
+    public HSTScaffoldTest(String testName) throws IOException {
         super(testName);
 
-        HSTScaffold.instance();
-        projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
+        HSTScaffold.instance("./myhippoproject");
+        projectDir = new File("./myhippoproject");
     }
 
     /**
@@ -74,22 +74,22 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getPathJavaClass()));
     }
 
-    public void testScaffoldRoutes() {
-        HSTScaffold scaffold = HSTScaffold.instance();
+    public void testScaffoldRoutes() throws IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         List<Route> routes = scaffold.getRoutes();
         assertEquals(6, routes.size());
     }
 
-    public void testUrlParameter() {
-        HSTScaffold scaffold = HSTScaffold.instance();
+    public void testUrlParameter() throws IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         List<Route> routes = scaffold.getRoutes();
         List<Route.Parameter> urlParameters = routes.get(3).getParameters();
         String type = urlParameters.get(0).type;
         assertEquals("String", type);
     }
 
-    public void testWildcardUrlParameter() {
-        HSTScaffold scaffold = HSTScaffold.instance();
+    public void testWildcardUrlParameter() throws IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         List<Route> routes = scaffold.getRoutes();
         List<Route.Parameter> urlParameters = routes.get(5).getParameters();
         String type = urlParameters.get(0).type;

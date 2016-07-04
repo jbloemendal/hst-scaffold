@@ -31,11 +31,14 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
         if (!projectDir.exists()) {
-            throw new IOException(String.format("Project directory doesn't exist $1.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
+            throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
         }
 
         scaffoldDir = new File(projectDir, ".scaffold");
-        scaffoldDir.mkdirs();
+        if (!scaffoldDir.exists()) {
+            scaffoldDir.mkdirs();
+        }
+
     }
 
     private void backup(boolean dryRun) throws IOException, RepositoryException {
@@ -69,7 +72,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     public void build(boolean dryRun) throws IOException, RepositoryException {
         backup(dryRun);
 
-        HSTScaffold scaffold = HSTScaffold.instance();
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         for (Route route : scaffold.getRoutes()) {
             try {
                 buildComponent(route.getPage(), dryRun);

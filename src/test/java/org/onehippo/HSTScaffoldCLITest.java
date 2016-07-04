@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 public class HSTScaffoldCLITest extends TestCase {
@@ -17,10 +18,10 @@ public class HSTScaffoldCLITest extends TestCase {
      *
      * @param testName name of the test case
      */
-    public HSTScaffoldCLITest(String testName) {
+    public HSTScaffoldCLITest(String testName) throws IOException {
         super(testName);
-        HSTScaffold.instance();
-        projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
+        HSTScaffold.instance("./myhippoproject");
+        projectDir = new File("./myhippoproject");
     }
 
     public void testHuman() {
@@ -28,10 +29,10 @@ public class HSTScaffoldCLITest extends TestCase {
         assertTrue(five % 2 == 0);
     }
 
-    public void testDryRun() {
+    public void testDryRun() throws IOException {
         final Map<String, String> before = TestUtils.dirHash(projectDir);
 
-        HSTScaffold scaffold = HSTScaffold.instance();
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
 
         scaffold.build(true);
 
@@ -39,10 +40,10 @@ public class HSTScaffoldCLITest extends TestCase {
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-    public void testRollback() {
+    public void testRollback() throws IOException {
         final Map<String, String> before = TestUtils.dirHash(projectDir);
 
-        HSTScaffold scaffold = HSTScaffold.instance();
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
 
         File history = new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history");
 

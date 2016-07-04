@@ -1,6 +1,7 @@
 package org.onehippo;
 
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -39,19 +40,44 @@ public class HSTScaffold {
     private List<Route> routes = new ArrayList<Route>();
 
     public static Properties properties;
-    {
+
+    HSTScaffold(String projectDirPath) throws IOException {
+        File scaffoldDir = createHiddenScaffold(projectDirPath);
+
+        loadProperties(scaffoldDir);
+
+        read(new InputStreamReader(this.getClass().getResourceAsStream("/scaffold.hst")));
+    }
+
+    private void loadProperties(File scaffoldDir) {
         properties = new Properties();
         try {
-            final InputStream stream = this.getClass().getResourceAsStream("/scaffold.properties");
-            properties.load(stream);
+            File propertiesFile = new File(scaffoldDir, "conf.properties");
+
+            if (!propertiesFile.exists()) {
+                FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/scaffold.properties"), propertiesFile);
+            }
+
+            properties.load(new BufferedInputStream(new FileInputStream(propertiesFile)));
+            properties.put(PROJECT_DIR, scaffoldDir.getParent());
+            // todo can we determine project name and project package name from the existing sources
+            // and what about the hst site conf name / multi site?
         } catch (IOException e) {
             log.error("Error loading properties");
         }
     }
 
-    HSTScaffold() {
-        // todo load config from parameter
-        read(new InputStreamReader(this.getClass().getResourceAsStream("/scaffold.hst")));
+    private File createHiddenScaffold(String projectDirPath) throws IOException {
+        File projectDir = new File(projectDirPath);
+        if (!projectDir.exists()) {
+            throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
+        }
+
+        File scaffoldDir = new File(projectDir, ".scaffold");
+        if (!scaffoldDir.exists()) {
+            scaffoldDir.mkdirs();
+        }
+        return scaffoldDir;
     }
 
     public List<Route> getRoutes() {
@@ -148,9 +174,9 @@ public class HSTScaffold {
         }
     }
 
-    public static HSTScaffold instance() {
+    public static HSTScaffold instance(String path) throws IOException {
         if (scaffold == null) {
-            scaffold = new HSTScaffold();
+            scaffold = new HSTScaffold(path);
         }
 
         return scaffold;
