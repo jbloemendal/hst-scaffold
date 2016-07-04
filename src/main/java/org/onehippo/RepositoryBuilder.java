@@ -205,6 +205,15 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     public void rollback() {
         // todo rollback latest build
+
+        // move current projects java and templates into .scaffold/.trash/date
+        // export current projects hst conf to .scaffold/.trash/date
+
+        // find latest backup folder
+        // restore hst config
+        // copy java and templates from backup folder
+
+        // remove backup folder
     }
 
 }

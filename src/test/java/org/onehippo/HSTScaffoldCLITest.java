@@ -33,7 +33,6 @@ public class HSTScaffoldCLITest extends TestCase {
 
         HSTScaffold scaffold = HSTScaffold.instance();
 
-        // persist data to dry run .scaffold/dryrun directory instead of project
         scaffold.dryRun();
 
         final Map<String, String> after = TestUtils.dirHash(projectDir);
