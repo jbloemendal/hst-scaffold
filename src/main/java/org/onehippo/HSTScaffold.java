@@ -15,7 +15,7 @@ public class HSTScaffold {
 
     final public static String SCAFFOLD_DIR_NAME = ".scaffold";
 
-    public static final String PROJECT_HST_NODE_NAME = "myhippoproject";
+    public static final String PROJECT_NAME = "projectName";
 
     public static final String PROJECT_DIR = "projectDir";
     public static final String DEFAULT_PROJECT_DIR = ".";
@@ -42,7 +42,6 @@ public class HSTScaffold {
         properties = new Properties();
         try {
             final InputStream stream = this.getClass().getResourceAsStream("/scaffold.properties");
-            log.debug("stream "+stream);
             properties.load(stream);
         } catch (IOException e) {
             log.error("Error loading properties");
@@ -79,7 +78,6 @@ public class HSTScaffold {
     private boolean isComment(String line) {
         Matcher matcher = COMMENT.matcher(line);
         if (matcher.matches()) {
-            log.debug("skip line "+line);
             return true;
         }
         return false;

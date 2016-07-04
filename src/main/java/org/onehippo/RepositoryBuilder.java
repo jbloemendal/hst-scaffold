@@ -25,7 +25,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     public RepositoryBuilder(Node hstRoot) throws RepositoryException, IOException {
         this.hstRoot = hstRoot;
 
-        String projectHstNodeName = HSTScaffold.properties.getProperty("projectHstNodeName");
+        String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
         projectHstConfRoot = hstRoot.getNode("hst:configurations").getNode(projectHstNodeName);
 
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
@@ -37,28 +37,42 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         scaffoldDir.mkdir();
     }
 
-    private void backup() throws IOException, RepositoryException {
+    private void backup(boolean dryRun) throws IOException, RepositoryException {
         File backup = new File(scaffoldDir, ""+System.currentTimeMillis());
-        backup.mkdir();
+        log.info(String.format("Creating backup directory %s", backup.getPath()));
+        if (!dryRun) {
+            backup.mkdir();
+        }
 
-        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_HST_NODE_NAME);
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
-        OutputStream out = new FileOutputStream(new File(backup, projectName+"_hst.xml"));
-        projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
+        File hstConfFile = new File(backup, projectName+"_hst.xml");
+        log.info(String.format("Export hst \"%s\" config %s", projectName, hstConfFile.getPath()));
+        if (!dryRun) {
+            OutputStream out = new FileOutputStream(hstConfFile);
+            projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
+        }
 
         String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
-        String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.DEFAULT_TEMPLATE_PATH);
-        FileUtils.copyDirectory(new File(projectDir, javaFilePath), new File(backup, "java"));
-        FileUtils.copyDirectory(new File(projectDir, ftlFilePath), new File(backup, "ftl"));
+        String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+
+        File componentDirectory = new File(projectDir, javaFilePath);
+        File templateDirectory = new File(projectDir, ftlFilePath);
+        log.info(String.format("Backup java components %s and templates %s", componentDirectory.getPath(), templateDirectory.getPath()));
+        if (!dryRun) {
+            FileUtils.copyDirectory(componentDirectory, new File(backup, "java"));
+            FileUtils.copyDirectory(templateDirectory, new File(backup, "ftl"));
+        }
     }
 
     public void dryRun() throws RepositoryException, IOException {
+        backup(true);
         build(true);
     }
 
     public void build() throws IOException, RepositoryException {
-        // todo backup();
-        build(false);
+        backup(true);
+        build(true);
     }
 
     private void buildComponentJavaFile(final Route.Component component, boolean dryRun) throws IOException {
@@ -69,7 +83,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         if (!dryRun) {
             File javaClassFile = new File(component.getPathJavaClass());
             if (javaClassFile.exists()) {
-                log.info(String.format("Java component file $1 alreday exists", javaClassFile.getPath()));
+                log.info(String.format("Java component file %s alreday exists", javaClassFile.getPath()));
             } else {
                 writer = new FileWriter(javaClassFile);
             }
@@ -91,7 +105,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         if (!dryRun) {
             File templateFile = new File(component.getTemplateFilePath());
             if (templateFile.exists()) {
-                log.info(String.format("Template file $1 already exists.", templateFile.getPath()));
+                log.info(String.format("Template file %s already exists.", templateFile.getPath()));
             } else {
                 writer = new FileWriter(templateFile);
             }
@@ -116,7 +130,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             nodeName = component.getName()+"_"+index;
         }
 
-        log.info(String.format("New component node $1", components.getPath()+"/"+nodeName+"."));
+        log.info(String.format("New component node %s", components.getPath()+"/"+nodeName+"."));
         if (!dryRun) {
             Node newComponent = components.addNode(nodeName);
             newComponent.setProperty("hst:componentclassname", component.getJavaClass());

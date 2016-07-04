@@ -114,26 +114,21 @@ public class Route {
         Scanner parameterScanner = new Scanner(urlMatcher);
         Pattern parameterPattern = Pattern.compile("(\\*|:)[^/]+");
 
-        log.info("find:"+parameterPattern.matcher(urlMatcher).find());
-
         String parameter = null;
         while ((parameter = parameterScanner.findInLine(parameterPattern)) != null) {
             parameter = parameter.substring(1);
 
-            log.info("route url: "+this.urlMatcher+", parameter: "+parameter);
-
             Pattern contentPattern = Pattern.compile(parameter+":(String|Integer|Double|Boolean)");
             Matcher matcher = contentPattern.matcher(contentPath);
             if (matcher.find()) {
-                log.debug(matcher.group(1));
                 Parameter p = new Parameter();
                 p.name = parameter;
                 p.type = matcher.group(1);
                 parameters.add(p);
+                log.debug(String.format("route %s parameter: %s, type %s found.", urlMatcher, p.name, p.type));
             }
         }
 
-        log.debug("page construct "+pageConstruct);
         page = ComponentParser.parse(pageConstruct);
     }
 

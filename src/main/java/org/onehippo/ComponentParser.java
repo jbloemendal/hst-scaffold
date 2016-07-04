@@ -1,5 +1,7 @@
 package org.onehippo;
 
+import org.apache.log4j.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,6 +17,8 @@ Backus–Naur Form
 */
 public class ComponentParser {
 
+    final static Logger log = Logger.getLogger(ComponentParser.class);
+
     public static final Pattern WORD = Pattern.compile("^(\\s*)([A-Za-z]+).*");
     public static final Pattern COMMA = Pattern.compile("^(\\s*,\\s*).*");
     public static final Pattern OPEN_BRACKET = Pattern.compile("^(\\s*\\(\\s*).*");
@@ -22,6 +26,7 @@ public class ComponentParser {
     public static final Pattern CLOSE_BRACKET = Pattern.compile("^(\\s*\\)\\s*).*");
 
     public static Route.Component parse(String expression) {
+        log.debug(String.format("Parsing component expression %s", expression));
         return parseComponentExpression(null, expression);
     }
 
@@ -35,8 +40,10 @@ public class ComponentParser {
 
         String word = matcher.group(2);
 
+        log.debug(String.format("Component %s", word));
         Route.Component component = new Route.Component(word);
         if (parent != null) {
+            log.debug(String.format("Component %s add child %s", parent.getName(), component.getName()));
             parent.add(component);
         }
 

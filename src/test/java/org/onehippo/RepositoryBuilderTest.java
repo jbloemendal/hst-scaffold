@@ -214,7 +214,7 @@ public class RepositoryBuilderTest extends TestCase {
             scaffold.setBuilder(new RepositoryBuilder(hst));
             scaffold.build();
 
-            String projectHstNodeName = HSTScaffold.properties.getProperty("projectHstNodeName");
+            String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
             Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
             Node sitemap = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemap");
