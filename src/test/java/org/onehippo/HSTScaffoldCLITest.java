@@ -33,31 +33,29 @@ public class HSTScaffoldCLITest extends TestCase {
 
         HSTScaffold scaffold = HSTScaffold.instance();
 
-        scaffold.dryRun();
+        scaffold.build(true);
 
         final Map<String, String> after = TestUtils.dirHash(projectDir);
         assertFalse(TestUtils.dirChanged(before, after));
     }
 
-//    public void testRollback() {
-//        final Map<String, String> before = TestUtils.dirHash(projectDir);
-//
-//        HSTScaffold scaffold = HSTScaffold.instance();
-//
-//        // todo backup all files which are going to be changed (versioned history, timestamp folders)
-//        scaffold.build();
-//
-//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME).exists());
-//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history").exists());
-//
-//        // todo backup edited files (manual changed files) (rollback - rollback)
-//        // todo warn user that he edited files, which we will revert (force option?)
-//        scaffold.rollback();
-//
-//        final Map<String, String> after = TestUtils.dirHash(projectDir);
-//
-//        assertFalse(TestUtils.dirChanged(before, after));
-//    }
+    public void testRollback() {
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        HSTScaffold scaffold = HSTScaffold.instance();
+
+        File history = new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history");
+
+        scaffold.build(false);
+        assertTrue(history.exists());
+
+        scaffold.rollback(false);
+
+        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME+"/trash").exists());
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
+    }
 
 
 //    public void testUpdateDryRun() {

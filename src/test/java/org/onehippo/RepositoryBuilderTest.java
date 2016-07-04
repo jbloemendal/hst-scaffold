@@ -212,7 +212,7 @@ public class RepositoryBuilderTest extends TestCase {
             Node hst = JcrMockUp.mockJcrNode("/hst.xml");
 
             scaffold.setBuilder(new RepositoryBuilder(hst));
-            scaffold.build();
+            scaffold.build(false);
 
             String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
@@ -220,15 +220,15 @@ public class RepositoryBuilderTest extends TestCase {
             Node sitemap = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemap");
 
             for (Route route : scaffold.getRoutes()) {
-                // todo
-                // validateSitemap(sitemap, route);
-                // validateComponent(components, route.getPage());
+                // todo depends on  "Create Test Project Conf Setup #17"
+                 // validateSitemap(sitemap, route);
+                 // validateComponent(components, route.getPage());
             }
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
         } finally {
             if (scaffold != null) {
-                scaffold.rollback();
+                scaffold.rollback(false);
             }
         }
 
@@ -238,7 +238,8 @@ public class RepositoryBuilderTest extends TestCase {
 
     public void testMyAss() {
         boolean big = Boolean.TRUE;
-        assertTrue(big);
+        boolean lazy = Boolean.TRUE;
+        assertTrue(big && lazy);
     }
 
 }

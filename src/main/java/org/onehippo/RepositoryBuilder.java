@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.io.*;
@@ -34,14 +35,14 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
 
         scaffoldDir = new File(projectDir, ".scaffold");
-        scaffoldDir.mkdir();
+        scaffoldDir.mkdirs();
     }
 
     private void backup(boolean dryRun) throws IOException, RepositoryException {
-        File backup = new File(scaffoldDir, ""+System.currentTimeMillis());
+        File backup = new File(scaffoldDir, "history/"+System.currentTimeMillis());
         log.info(String.format("Creating backup directory %s", backup.getPath()));
         if (!dryRun) {
-            backup.mkdir();
+            backup.mkdirs();
         }
 
         String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
@@ -65,14 +66,21 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
     }
 
-    public void dryRun() throws RepositoryException, IOException {
-        backup(true);
-        build(true);
-    }
+    public void build(boolean dryRun) throws IOException, RepositoryException {
+        backup(dryRun);
 
-    public void build() throws IOException, RepositoryException {
-        backup(true);
-        build(true);
+        HSTScaffold scaffold = HSTScaffold.instance();
+        for (Route route : scaffold.getRoutes()) {
+            try {
+                buildComponent(route.getPage(), dryRun);
+                buildSitemapItem(route, dryRun);
+            } catch (IOException e) {
+                log.error("Error building route.", e);
+            } catch (RepositoryException e) {
+                log.error("Error building route.", e);
+            }
+        }
+
     }
 
     private void buildComponentJavaFile(final Route.Component component, boolean dryRun) throws IOException {
@@ -81,6 +89,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
         Writer writer= new PrintWriter(System.out);;
         File javaClassFile = new File(component.getPathJavaClass());
+        javaClassFile.getParentFile().mkdirs();
 
         log.info(String.format("Build component %s java class %s", component.getName(), javaClassFile.getPath()));
 
@@ -92,12 +101,16 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             }
         }
 
-        mustache.execute(writer, new HashMap<String, String>() {
-            {
-                put("projectPackage", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_PACKAGE_NAME));
-                put("name", StringUtils.capitalize(component.getName()));
-            }
-        }).flush();
+        try {
+            mustache.execute(writer, new HashMap<String, String>() {
+                {
+                    put("projectPackage", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_PACKAGE_NAME));
+                    put("name", StringUtils.capitalize(component.getName()));
+                }
+            }).flush();
+        } finally {
+            writer.close();
+        }
     }
 
     private void buildTemplateFtlFile(final Route.Component component, boolean dryRun) throws IOException {
@@ -107,10 +120,12 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         Writer writer = new PrintWriter(System.out);
 
         File templateFile = new File(component.getTemplateFilePath());
+
+        templateFile.getParentFile().mkdirs();
+
         log.info(String.format("Build %s component template %s", component.getName(), templateFile.getPath()));
 
         if (!dryRun) {
-
             if (templateFile.exists()) {
                 log.info(String.format("Template file %s already exists.", templateFile.getPath()));
             } else {
@@ -118,11 +133,16 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             }
         }
 
-        mustache.execute(writer, new HashMap<String, Object>() {
-            {
-                put("childs", component.getComponents());
-            }
-        }).flush();
+        try {
+            mustache.execute(writer, new HashMap<String, Object>() {
+                {
+                    put("childs", component.getComponents());
+                    put("name", StringUtils.capitalize(component.getName().toLowerCase()));
+                }
+            }).flush();
+        } finally {
+            writer.close();
+        }
     }
 
     private void buildComponentHstConf(Route.Component component, boolean dryRun) throws RepositoryException {
@@ -133,21 +153,27 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         Node components = projectHstConfRoot.getNode("hst:components");
         String nodeName = component.getName();
         int index = 1;
-        while (components.hasNode(nodeName)) {
+        while (components.hasNode(nodeName)) { // todo ???
             nodeName = component.getName()+"_"+index;
+            index++;
         }
 
         log.info(String.format("New component node %s", components.getPath()+"/"+nodeName+"."));
         if (!dryRun) {
-            Node newComponent = components.addNode(nodeName);
+            Node newComponent = components.addNode(nodeName, "hst:component");
             newComponent.setProperty("hst:componentclassname", component.getJavaClass());
             newComponent.setProperty("hst:template", component.getTemplateName());
         }
     }
 
     private void buildComponent(Route.Component component, boolean dryRun) throws IOException, RepositoryException {
+        log.debug(String.format("Build %s java file", component.getName()));
         buildComponentJavaFile(component, dryRun);
+
+        log.debug(String.format("Build %s template", component.getName()));
         buildTemplateFtlFile(component, dryRun);
+
+        log.debug(String.format("Build %s hst conf", component.getName()));
         buildComponentHstConf(component, dryRun);
 
         // jcr hst configuration
@@ -189,31 +215,73 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     }
 
-    private void build(boolean dryRun) {
-        HSTScaffold scaffold = HSTScaffold.instance();
-        for (Route route : scaffold.getRoutes()) {
-            try {
-                buildComponent(route.getPage(), true);
-                buildSitemapItem(route, true);
-            } catch (IOException e) {
-                log.error("Error building route.", e);
-            } catch (RepositoryException e) {
-                log.error("Error building route.", e);
-            }
-        }
-    }
 
-    public void rollback() {
-        // todo rollback latest build
+    public void rollback(boolean dryRun) throws IOException, RepositoryException {
+        log.info("Move current project conf into trash.");
+        File trash = new File(scaffoldDir, "trash/"+System.currentTimeMillis());
+        if (!trash.exists()) {
+            trash.mkdirs();
+        }
 
         // move current projects java and templates into .scaffold/.trash/date
+        String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
+        String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+        File componentDirectory = new File(projectDir, javaFilePath);
+        File templateDirectory = new File(projectDir, ftlFilePath);
+
+        log.info(String.format("Move java components %s and templates %s into %s", componentDirectory.getPath(), templateDirectory.getPath(), trash.getPath()));
+        if (!dryRun) {
+            FileUtils.moveDirectory(componentDirectory, new File(trash, "java"));
+            FileUtils.moveDirectory(templateDirectory, new File(trash, "ftl"));
+        }
+
         // export current projects hst conf to .scaffold/.trash/date
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+
+        File hstConfFile = new File(trash, projectName+"_hst.xml");
+        log.info(String.format("Export hst \"%s\" config %s", projectName, hstConfFile.getPath()));
+        if (!dryRun) {
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(hstConfFile));
+            projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
+        }
+
+        log.info("Restore backup");
 
         // find latest backup folder
-        // restore hst config
+        File backups = new File(scaffoldDir, "history");
+
+        File[] files = backups.listFiles();
+        Arrays.sort(files);
+
+        File latest = files[files.length-1];
+
         // copy java and templates from backup folder
+        File latestJavaFilesBackup = new File(latest, "java");
+        File latestTemplateFilesBackup = new File(latest, "ftl");
+
+        log.info(String.format("Copy backup: java components %s into %s", latestJavaFilesBackup.getPath(),  componentDirectory.getPath()));
+        log.info(String.format("Copy backup: templates %s into %s", latestTemplateFilesBackup.getPath(), templateDirectory.getPath()));
+        if (!dryRun) {
+            FileUtils.copyDirectory(latestJavaFilesBackup, componentDirectory);
+            FileUtils.copyDirectory(latestTemplateFilesBackup, templateDirectory);
+        }
+
+        // restore hst config
+        hstConfFile = new File(latest, projectName+"_hst.xml");
+        log.info(String.format("Import hst \"%s\" config %s", projectName, hstConfFile.getPath()));
+        if (!dryRun) {
+            projectHstConfRoot.getSession().removeItem(projectHstConfRoot.getPath());
+
+            Node hstConfigurations = hstRoot.getNode("hst:configurations");
+            InputStream in = new BufferedInputStream(new FileInputStream(hstConfFile));
+            projectHstConfRoot.getSession().importXML(hstConfigurations.getPath(), in, ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
+        }
 
         // remove backup folder
+        log.info(String.format("Delete backup %s", latest));
+        if (!dryRun) {
+            FileUtils.deleteDirectory(latest);
+        }
     }
 
 }

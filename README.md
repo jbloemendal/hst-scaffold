@@ -16,11 +16,12 @@ Example Scaffold (scaffold.hst):
 #HST scaffold example
 
 #URL              CONTENTPATH                   COMPONENTS
-/                 /home                         home(header,main(banner, text),footer) # home_page
-/simple           /simple                       simple                                 # simple_page
-/contact          /contact                      text(header,main(banner, text),footer) # text_page
-/news/:date/:id   /news/date:String/id:String   news(header,main(banner, news),footer) # news_page
-/text/*path       /text/path:String             text(header,main(banner, text),footer) # text_page
+/                 /home                          home(header,main(banner, doc),footer)      # home page
+/simple           /simple                        simple                                     # simple page
+/contact          /contact                       text(header,main(banner, doc),footer)      # text page
+/news/:date/:id   /news/date:String/id:String    news(header,main(banner, doc),footer)      # news page
+/news             /news                          news(header, list, footer)                 # news overview page
+/text/*path       /text/path:String              text(header,main(banner, doc),footer)      # text page
 ```
 
 Usage:
@@ -34,5 +35,4 @@ Options
 -u     --update             Update configuration from scaffold
 -s     --scaffold           Build scaffold from existing project configuration (reverse).
 -r     --rollback           Rollback Build / Update / Scaffold.
-
 ```

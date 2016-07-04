@@ -1,7 +1,9 @@
 <#include "../include/imports.ftl">
 
-{{#childs}}
 <div class="{{name}}">
-    <@hst.include ref="{{name}}">
+    {{#childs}}
+    <div class="{{name}}">
+        <@hst.include ref="{{name}}">
+    </div>
+    {{/childs}}
 </div>
-{{/childs}}

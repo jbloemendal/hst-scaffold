@@ -4,6 +4,7 @@ package org.onehippo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import javax.jcr.RepositoryException;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -126,31 +127,24 @@ public class HSTScaffold {
         this.builder = builder;
     }
 
-    public void dryRun() {
-        if (this.builder != null) {
-            try {
-                this.builder.dryRun();
-            } catch (Exception e) {
-                log.error("Error doing dryRun, rolling back.", e);
-                this.builder.rollback();
-            }
-        }
-    }
 
-    public void build() {
+    public void build(boolean dryRun) {
         if (this.builder != null) {
             try {
-                this.builder.build();
+                this.builder.build(dryRun);
             } catch (Exception e) {
                 log.error("Error building scaffold, rolling back.", e);
-                this.builder.rollback();
             }
         }
     }
 
-    public void rollback() {
+    public void rollback(boolean dryRun) {
         if (this.builder != null) {
-            this.builder.rollback();
+            try {
+                this.builder.rollback(dryRun);
+            } catch (Exception e) {
+                log.error("Error rolling back to previous project state.");
+            }
         }
     }
 
