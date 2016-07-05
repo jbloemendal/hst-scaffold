@@ -61,7 +61,7 @@ public class HSTScaffold {
             properties.load(new BufferedInputStream(new FileInputStream(propertiesFile)));
             properties.put(PROJECT_DIR, scaffoldDir.getParent());
             // todo can we determine project name and project package name from the existing sources
-            // and what about the hst site conf name / multi site?
+            // and what about the hst site conf name / multi site setups?
         } catch (IOException e) {
             log.error("Error loading properties");
         }

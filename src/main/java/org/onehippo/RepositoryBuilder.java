@@ -90,7 +90,16 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     private void buildComponentJavaFile(final Route.Component component, boolean dryRun) throws IOException {
         MustacheFactory mf = new DefaultMustacheFactory();
-        Mustache mustache = mf.compile(this.getClass().getResource("/Component.java.mustache").getFile());
+
+        String templatePath = "";
+        File template = new File(scaffoldDir, "Component.java.mustache");
+        if (template.exists()) {
+            templatePath = template.getPath();
+        } else {
+            templatePath = this.getClass().getResource("/Component.java.mustache").getFile();
+        }
+
+        Mustache mustache = mf.compile(templatePath);
 
         Writer writer= new PrintWriter(System.out);;
         File javaClassFile = new File(component.getPathJavaClass());
@@ -110,7 +119,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             mustache.execute(writer, new HashMap<String, String>() {
                 {
                     put("projectPackage", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_PACKAGE_NAME));
-                    put("name", StringUtils.capitalize(component.getName()));
+                    put("name", StringUtils.capitalize(component.getName().toLowerCase()));
                 }
             }).flush();
         } finally {
@@ -120,7 +129,16 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     private void buildTemplateFtlFile(final Route.Component component, boolean dryRun) throws IOException {
         MustacheFactory mf = new DefaultMustacheFactory();
-        Mustache mustache = mf.compile(this.getClass().getResource("/template.ftl.mustache").getFile());
+
+        String templatePath = "";
+        File template = new File(scaffoldDir, "template.ftl.mustache");
+        if (template.exists()) {
+            templatePath = template.getPath();
+        } else {
+            templatePath = this.getClass().getResource("/template.ftl.mustache").getFile();
+        }
+
+        Mustache mustache = mf.compile(templatePath);
 
         Writer writer = new PrintWriter(System.out);
 
@@ -142,7 +160,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             mustache.execute(writer, new HashMap<String, Object>() {
                 {
                     put("childs", component.getComponents());
-                    put("name", StringUtils.capitalize(component.getName().toLowerCase()));
+                    put("name", component.getName().toLowerCase());
                 }
             }).flush();
         } finally {
@@ -233,6 +251,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
                 sitemapItem.addNode("_any_", "hst:sitemapitem");
                 sitemapItem.setProperty("hst:componentconfigurationid", "");
             } else {
+                log.debug(String.format("Add node %s to %s", sitemapItem.getPath(), path));
                 sitemapItem.addNode(path, "hst:sitemapitem");
             }
         }
