@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.ValueFactory;
 import java.io.*;
 import java.util.*;
 
@@ -77,6 +78,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             try {
                 buildComponent(route.getPage(), dryRun);
                 buildSitemapItem(route, dryRun);
+                buildContent(route, dryRun);
             } catch (IOException e) {
                 log.error("Error building route.", e);
             } catch (RepositoryException e) {
@@ -183,6 +185,35 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         for (Route.Component child : component.getComponents()) {
             buildComponent(child, dryRun);
         }
+    }
+
+    /*
+    /news/date:String/id:String
+    /news
+    */
+    private void buildContent(Route route, boolean dryRun) throws RepositoryException {
+//        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+//
+//        Node documents = projectHstConfRoot.getSession().getNode("/content/documents");
+//
+//        String contentPath = route.getContentPath();
+//        List<Route.Parameter> parameters = route.getParameters();
+//
+//        int index = 1;
+//        for (Route.Parameter param : parameters) {
+//            contentPath = contentPath.replace("/"+param.name+":"+param.type, "");
+//            index++;
+//        }
+//
+//        ValueFactory valueFactory = projectHstConfRoot.getSession().getValueFactory();
+//
+//        Node siteContentRoot = documents.addNode(projectName, "hippostd:folder");
+//        siteContentRoot.setProperty("hippostd:foldertype", valueFactory.);
+//
+//        ValueFactory valueFactory=context.getSession().getValueFactory();
+//        Value[] values={valueFactory.createValue("testValue")};
+//        property=node.setProperty("testProperty",values);
+
     }
 
     private void buildSitemapItem(Route route, boolean dryRun) throws RepositoryException {
