@@ -1,14 +1,10 @@
 package org.onehippo;
 
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 import org.hippoecm.repository.HippoRepository;
 import org.hippoecm.repository.HippoRepositoryFactory;
+import org.onehippo.build.RepositoryBuilder;
 
 import javax.jcr.*;
 import java.io.IOException;
@@ -16,6 +12,15 @@ import java.io.IOException;
 public class HSTScaffoldCLI {
 
     final static Logger log = Logger.getLogger(HSTScaffoldCLI.class);
+
+    public static void printHelp(Options options) {
+        for (Object obj : options.getOptions()) {
+            if (obj instanceof Option) {
+                Option option = (Option)obj;
+                log.info(String.format("-%s\t--%s - %s", option.getOpt(), option.getLongOpt(), option.getDescription()));
+            }
+        }
+    }
 
     public static void main( String[] args ) {
         // create the parser
@@ -33,7 +38,7 @@ public class HSTScaffoldCLI {
             // parse the command line arguments
             CommandLine line = parser.parse(options, args);
             if (line.hasOption("h")) {
-                log.info(options.toString());
+                printHelp(options);
             } else if (line.hasOption("b")) {
                 HSTScaffold scaffold = HSTScaffold.instance(".");
 
@@ -56,7 +61,8 @@ public class HSTScaffoldCLI {
                     session.refresh(false);
                     throw e;
                 }
-
+            } else {
+                printHelp(options);
             }
             // todo ask if there are several hst confs, which we should choose
 

@@ -28,6 +28,18 @@
     <param-value>repository.xml</param-value>
   </context-param>
 
+  <context-param>
+    <description>The address of the repository</description>
+    <param-name>repository-address</param-name>
+    <param-value>rmi://localhost:1099/hipporepository</param-value>
+  </context-param>
+  <context-param>
+    <description>The address of the repository</description>
+    <param-name>start-remote-server</param-name>
+    <param-value>true</param-value>
+  </context-param>
+
+
   <!--No concurrent logins-->
   <filter>
     <filter-name>ConcurrentLogin</filter-name>

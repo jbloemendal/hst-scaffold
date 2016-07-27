@@ -1,0 +1,9 @@
+#HST scaffold example
+
+#URL              CONTENTPATH                   COMPONENTS
+/                 /home                         home(header,&main(banner, doc),footer) # home page
+/simple           /simple                       simple                                 # simple page
+/contact          /contact                      text(header,*main,footer)              # text page
+/news/:date/:id   /news/date:String/id:String   news(header,*main,footer)              # news page
+/news             /news                         news(header,list, footer)              # news overview page
+/text/*path       /text/path:String             text(header,*main,footer)              # text page

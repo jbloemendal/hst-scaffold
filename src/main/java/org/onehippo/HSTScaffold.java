@@ -4,8 +4,8 @@ package org.onehippo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.onehippo.build.ScaffoldBuilder;
 
-import javax.jcr.RepositoryException;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -18,6 +18,7 @@ public class HSTScaffold {
     final public static String SCAFFOLD_DIR_NAME = ".scaffold";
 
     public static final String PROJECT_NAME = "projectName";
+    public static final String WEBFILE_BASE_PATH = "webfileBasePath";
 
     public static final String PROJECT_DIR = "projectDir";
     public static final String DEFAULT_PROJECT_DIR = ".";
@@ -32,7 +33,7 @@ public class HSTScaffold {
     public static final Pattern COMMENT = Pattern.compile("^(\\s*)#.*");
     public static final Pattern URL = Pattern.compile("^(\\s*)(/[^\\s]*/?)*");
     public static final Pattern CONTENT = Pattern.compile("^(\\s*)(/[^\\s]*/?)*");
-    public static final Pattern PAGE = Pattern.compile("([\\w\\(\\),\\s]+)");
+    public static final Pattern PAGE = Pattern.compile("([\\w\\(\\),\\s&\\*]+)");
 
     private static HSTScaffold scaffold;
     private ScaffoldBuilder builder;
@@ -44,9 +45,14 @@ public class HSTScaffold {
     HSTScaffold(String projectDirPath) throws IOException {
         File scaffoldDir = createHiddenScaffold(projectDirPath);
 
+        copyDefaultFiles(scaffoldDir);
         loadProperties(scaffoldDir);
 
-        read(new InputStreamReader(this.getClass().getResourceAsStream("/scaffold.hst")));
+        File scaffoldConf = new File(projectDirPath, "scaffold.hst");
+        if (!scaffoldConf.exists()) {
+            throw new IOException(String.format("Scaffold configuration scaffold.hst is missing %s.", scaffoldConf.getAbsolutePath()));
+        }
+        read(new InputStreamReader(new FileInputStream(scaffoldConf)));
     }
 
     private void loadProperties(File scaffoldDir) {
@@ -77,7 +83,25 @@ public class HSTScaffold {
         if (!scaffoldDir.exists()) {
             scaffoldDir.mkdirs();
         }
+
         return scaffoldDir;
+    }
+
+    private void copyDefaultFiles(File scaffoldDir) throws IOException {
+        File propertiesFile = new File(scaffoldDir, "conf.properties");
+        if (!propertiesFile.exists()) {
+            FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/scaffold.properties"), propertiesFile);
+        }
+
+        File componentJava = new File(scaffoldDir, "Component.java.mustache");
+        if (!componentJava.exists()) {
+            FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/Component.java.mustache"), componentJava);
+        }
+
+        File templateFtl = new File(scaffoldDir, "template.ftl.mustache");
+        if (!templateFtl.exists()) {
+            FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/template.ftl.mustache"), templateFtl);
+        }
     }
 
     public List<Route> getRoutes() {

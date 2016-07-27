@@ -2,6 +2,7 @@ package org.onehippo;
 
 import junit.framework.TestCase;
 import org.apache.log4j.Logger;
+import org.onehippo.build.RepositoryBuilder;
 import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 
 import javax.jcr.Node;
@@ -170,6 +171,8 @@ public class RepositoryBuilderTest extends TestCase {
                 sitemapItem = sitemapItem.getNode("_default_");
             } else if (path.startsWith("*")) {
                 sitemapItem = sitemapItem.getNode("_any_");
+            } else if ("/".equals(path)) {
+                sitemapItem = sitemapItem.getNode("root");
             } else {
                 sitemapItem = sitemapItem.getNode(path);
             }
@@ -224,6 +227,9 @@ public class RepositoryBuilderTest extends TestCase {
                  // validateSitemap(sitemap, route);
                  // validateComponent(components, route.getPage());
             }
+
+
+
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
         } finally {
@@ -234,12 +240,6 @@ public class RepositoryBuilderTest extends TestCase {
 
         final Map<String, String> after = TestUtils.dirHash(projectDir);
         assertFalse(TestUtils.dirChanged(before, after));
-    }
-
-    public void testMyAss() {
-        boolean big = Boolean.TRUE;
-        boolean lazy = Boolean.TRUE;
-        assertTrue(big && lazy);
     }
 
 }

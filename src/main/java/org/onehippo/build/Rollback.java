@@ -1,11 +1,12 @@
-package org.onehippo;
+package org.onehippo.build;
+
 
 import javax.jcr.RepositoryException;
 import java.io.IOException;
 
-public interface ScaffoldBuilder {
+public interface Rollback {
 
-    public void build(boolean dryRun) throws Exception;
+    public void backup(boolean dryRun) throws IOException, RepositoryException;
 
     public void rollback(boolean dryRun) throws IOException, RepositoryException;
 

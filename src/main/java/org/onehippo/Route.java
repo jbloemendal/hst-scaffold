@@ -27,6 +27,8 @@ public class Route {
         private String name;
         private Component parent;
         private List<Component> components;
+        private boolean reference = false;
+        private boolean pointer = false;
 
         public Component(String name) {
             this.name = name;
@@ -48,7 +50,9 @@ public class Route {
         }
 
         public String getWebfilePath() {
-            return ""+name+"ftl"; // todo
+            String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+            String basePath = HSTScaffold.properties.getProperty(HSTScaffold.WEBFILE_BASE_PATH);
+            return basePath+projectName+"/"+name+".ftl";
         }
 
         public String getTemplateName() {
@@ -56,14 +60,14 @@ public class Route {
         }
 
         public String getJavaClass() {
-            // todo
-            return "Component.java";
+            String packagePath = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_PACKAGE_NAME);
+            return packagePath+"."+StringUtils.capitalize(name)+"Component.java";
         }
 
         public String getPathJavaClass() {
             String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
             String javaComponentPath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
-            return projectDir+"/"+javaComponentPath+"/"+name.substring(0,1).toUpperCase()+name.substring(1)+"Component.java";
+            return projectDir+"/"+javaComponentPath+"/"+StringUtils.capitalize(name)+"Component.java";
         }
 
         public void add(Component component) {
@@ -90,6 +94,22 @@ public class Route {
                 }
             }
             return componentPath.toString();
+        }
+
+        public void setReference(boolean arg0) {
+            this.reference = arg0;
+        }
+
+        public boolean isReference() {
+            return this.reference;
+        }
+
+        public boolean isPointer() {
+            return pointer;
+        }
+
+        public void setPointer(boolean pointer) {
+            this.pointer = pointer;
         }
     }
 
@@ -148,4 +168,7 @@ public class Route {
         return parameters;
     }
 
+    public String getPageConstruct() {
+        return pageConstruct;
+    }
 }

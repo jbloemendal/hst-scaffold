@@ -8,10 +8,9 @@ Scaffold your projects Hippo Site Toolkit configuration from text file.
 Build:
 ```
 mvn clean verify
-mv target/sfd-jar-with-dependencies.jar sfd.jar
 ```
 
-Example Scaffold (scaffold.hst):
+Example Scaffold (myhippoproject/scaffold.hst):
 ```
 #HST scaffold example
 
@@ -26,6 +25,7 @@ Example Scaffold (scaffold.hst):
 
 Usage:
 ```
+cd myhippoproject
 java -jar sfd.jar [options] [args]
 
 Options

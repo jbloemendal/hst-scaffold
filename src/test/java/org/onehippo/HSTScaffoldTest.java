@@ -3,17 +3,10 @@ package org.onehippo;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 import org.apache.log4j.Logger;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.regex.Pattern;
 
 /**
  * Unit test for HSTScaffold.
@@ -94,6 +87,15 @@ public class HSTScaffoldTest extends TestCase {
         List<Route.Parameter> urlParameters = routes.get(5).getParameters();
         String type = urlParameters.get(0).type;
         assertEquals("String", type);
+    }
+
+    public void testPointerReference() throws IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+
+        List<Route> routes = scaffold.getRoutes();
+        assertTrue(routes.get(0).getPage().getComponents().get(1).getName().equals("main"));
+        assertTrue(routes.get(0).getPage().getComponents().get(1).isReference());
+        assertTrue(routes.get(3).getPage().getComponents().get(1).isPointer());
     }
 
 }

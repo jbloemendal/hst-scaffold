@@ -19,6 +19,8 @@ public class ComponentParser {
 
     final static Logger log = Logger.getLogger(ComponentParser.class);
 
+    public static final Pattern POINTER = Pattern.compile("^(\\s*\\*)([A-Za-z]+).*");
+    public static final Pattern REFERENCE = Pattern.compile("^(\\s*&)([A-Za-z]+).*");
     public static final Pattern WORD = Pattern.compile("^(\\s*)([A-Za-z]+).*");
     public static final Pattern COMMA = Pattern.compile("^(\\s*,\\s*).*");
     public static final Pattern OPEN_BRACKET = Pattern.compile("^(\\s*\\(\\s*).*");
@@ -34,7 +36,21 @@ public class ComponentParser {
     private static Route.Component parseComponentExpression(Route.Component parent, String expression) {
         String expr = expression;
 
-        Matcher matcher = WORD.matcher(expr);
+        boolean reference = false;
+        boolean pointer = false;
+
+        Matcher matcher = POINTER.matcher(expr);
+
+        if (matcher.matches()) {
+            pointer = true;
+        } else {
+            matcher = REFERENCE.matcher(expr);
+        }
+        if (matcher.matches()) {
+            reference = true;
+        } else {
+            matcher = WORD.matcher(expr);
+        }
         if (!matcher.matches()) {
             return null;
         }
@@ -45,6 +61,9 @@ public class ComponentParser {
         if (parent != null) {
             parent.add(component);
         }
+
+        component.setReference(reference);
+        component.setPointer(pointer);
 
         expr = expr.substring(matcher.group(1).length()+matcher.group(2).length());
 
@@ -62,6 +81,7 @@ public class ComponentParser {
             if (!matcher.matches()) {
                 return null;
             }
+
             expr = expr.substring(matcher.group(1).length());
         }
 

@@ -26,7 +26,8 @@ public class HSTScaffoldCLITest extends TestCase {
 
     public void testHuman() {
         int five = 4;
-        assertTrue(five % 2 == 0);
+        int even = 2;
+        assertTrue(five % even == 0);
     }
 
     public void testDryRun() throws IOException {
@@ -48,6 +49,8 @@ public class HSTScaffoldCLITest extends TestCase {
         File history = new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history");
 
         scaffold.build(false);
+
+        log.debug("Scaffold history exists? "+history.getPath());
         assertTrue(history.exists());
 
         scaffold.rollback(false);
