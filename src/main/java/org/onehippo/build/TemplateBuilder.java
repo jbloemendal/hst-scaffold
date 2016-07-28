@@ -19,6 +19,16 @@ public class TemplateBuilder {
     private File projectDir;
     private File scaffoldDir;
 
+    /**
+     * Writes to nowhere
+     * */
+    public class NullOutputWriter extends Writer {
+        public void write(char[] cbuf, int off, int len) throws IOException { }
+        public void flush() throws IOException { }
+        public void close() throws IOException { }
+    }
+
+
     public TemplateBuilder() throws RepositoryException, IOException {
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
         if (!projectDir.exists()) {
@@ -34,6 +44,21 @@ public class TemplateBuilder {
     public void buildComponentJavaFile(final Route.Component component, boolean dryRun) throws IOException {
         MustacheFactory mf = new DefaultMustacheFactory();
 
+        File javaClassFile = new File(component.getPathJavaClass());
+        javaClassFile.getParentFile().mkdirs();
+
+        log.info(String.format("%s Build component %s java class %s", (dryRun? "DRYRUN " : ""), component.getName(), javaClassFile.getPath()));
+
+        Writer writer;
+        if (dryRun) {
+            writer = new PrintWriter(System.out);
+        } else if (javaClassFile.exists()) {
+            log.info(String.format("Java component file %s alreday exists", javaClassFile.getPath()));
+            return;
+        } else {
+            writer = new FileWriter(javaClassFile);
+        }
+
         String templatePath = "";
         File template = new File(scaffoldDir, "Component.java.mustache");
         if (template.exists()) {
@@ -43,21 +68,6 @@ public class TemplateBuilder {
         }
 
         Mustache mustache = mf.compile(templatePath);
-
-        Writer writer= new PrintWriter(System.out);;
-        File javaClassFile = new File(component.getPathJavaClass());
-        javaClassFile.getParentFile().mkdirs();
-
-        log.info(String.format("%s Build component %s java class %s", (dryRun? "DRYRUN " : ""), component.getName(), javaClassFile.getPath()));
-
-        if (!dryRun) {
-            if (javaClassFile.exists()) {
-                log.info(String.format("Java component file %s alreday exists", javaClassFile.getPath()));
-            } else {
-                writer = new FileWriter(javaClassFile);
-            }
-        }
-
         try {
             mustache.execute(writer, new HashMap<String, String>() {
                 {
@@ -71,7 +81,20 @@ public class TemplateBuilder {
     }
 
     public void buildTemplateFtlFile(final Route.Component component, boolean dryRun) throws IOException, RepositoryException {
-        MustacheFactory mf = new DefaultMustacheFactory();
+        File freemarkerFile = new File(component.getTemplateFilePath());
+        freemarkerFile.getParentFile().mkdirs();
+
+        Writer writer;
+        log.info(String.format("%s Build %s component template %s", (dryRun? "DRYRUN " : ""), component.getName(), freemarkerFile.getPath()));
+
+        if (dryRun) {
+            writer = new PrintWriter(System.out);
+        } else if (freemarkerFile.exists()) {
+            log.info(String.format("Template file %s already exists.", freemarkerFile.getPath()));
+            return;
+        } else {
+            writer = new FileWriter(freemarkerFile);
+        }
 
         String templatePath = "";
         File template = new File(scaffoldDir, "template.ftl.mustache");
@@ -81,29 +104,20 @@ public class TemplateBuilder {
             templatePath = this.getClass().getResource("/template.ftl.mustache").getFile();
         }
 
+        MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(templatePath);
-
-        Writer writer = new PrintWriter(System.out);
-
-        File templateFile = new File(component.getTemplateFilePath());
-
-        templateFile.getParentFile().mkdirs();
-
-        log.info(String.format("%s Build %s component template %s", (dryRun? "DRYRUN " : ""), component.getName(), templateFile.getPath()));
-
-        if (!dryRun) {
-            if (templateFile.exists()) {
-                log.info(String.format("Template file %s already exists.", templateFile.getPath()));
-            } else {
-                writer = new FileWriter(templateFile);
-            }
-        }
-
         try {
             mustache.execute(writer, new HashMap<String, Object>() {
                 {
                     put("childs", component.getComponents());
                     put("name", component.getName().toLowerCase());
+
+                    StringBuilder relative = new StringBuilder();
+                    String path[] = component.getComponentPath().split("/");
+                    for (String segment : path) {
+                        relative.append("../");
+                    }
+                    put("include", relative.toString()+"include/imports.ftl");
                 }
             }).flush();
         } finally {

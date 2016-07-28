@@ -45,12 +45,13 @@ public class ComponentParser {
             pointer = true;
         } else {
             matcher = REFERENCE.matcher(expr);
+            if (matcher.matches()) {
+                reference = true;
+            } else {
+                matcher = WORD.matcher(expr);
+            }
         }
-        if (matcher.matches()) {
-            reference = true;
-        } else {
-            matcher = WORD.matcher(expr);
-        }
+
         if (!matcher.matches()) {
             return null;
         }

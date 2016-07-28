@@ -66,8 +66,14 @@ public class HSTScaffold {
 
             properties.load(new BufferedInputStream(new FileInputStream(propertiesFile)));
             properties.put(PROJECT_DIR, scaffoldDir.getParent());
-            // todo can we determine project name and project package name from the existing sources
+
+            // todo
+            File projectPom = new File(scaffoldDir.getParentFile(), "pom.xml");
+
+            // can we determine project name and project package name from the existing sources
             // and what about the hst site conf name / multi site setups?
+
+            // properties.store();
         } catch (IOException e) {
             log.error("Error loading properties");
         }
@@ -181,6 +187,7 @@ public class HSTScaffold {
     public void build(boolean dryRun) {
         if (this.builder != null) {
             try {
+                this.builder.backup(dryRun);
                 this.builder.build(dryRun);
             } catch (Exception e) {
                 log.error("Error building scaffold, rolling back.", e);

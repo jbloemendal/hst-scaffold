@@ -52,7 +52,7 @@ public class Route {
         public String getWebfilePath() {
             String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
             String basePath = HSTScaffold.properties.getProperty(HSTScaffold.WEBFILE_BASE_PATH);
-            return basePath+projectName+"/"+name+".ftl";
+            return basePath+projectName+"/"+getComponentPath()+".ftl";
         }
 
         public String getTemplateName() {
@@ -61,7 +61,7 @@ public class Route {
 
         public String getJavaClass() {
             String packagePath = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_PACKAGE_NAME);
-            return packagePath+"."+StringUtils.capitalize(name)+"Component.java";
+            return packagePath+"."+StringUtils.capitalize(name)+"Component";
         }
 
         public String getPathJavaClass() {
@@ -111,6 +111,72 @@ public class Route {
         public void setPointer(boolean pointer) {
             this.pointer = pointer;
         }
+
+        public Component getParent() {
+            return parent;
+        }
+
+        public List<Component> getParents() {
+            List<Component> path = new LinkedList<Component>();
+
+            Route.Component cursor = this;
+            while (cursor != null) {
+                cursor = (cursor.getParent());
+                if (cursor == null) {
+                    continue;
+                }
+                path.add(0, cursor);
+            }
+
+            return path;
+        }
+
+        public List<Component> getReferenceBranch() {
+            List<Component> branch = new LinkedList<Component>();
+
+            // skip nodes till reference found
+            List<Component> parents = getParents();
+            while (parents.size() > 0) {
+                if (parents.get(0).isReference()) {
+                    break;
+                }
+                parents.remove(0);
+            }
+
+            // build branch
+            while (parents.size() > 0) {
+                Route.Component parent = parents.remove(0);
+                branch.add(parent);
+            }
+
+            return branch;
+        }
+
+        public String getReferenceBranchPath() {
+            StringBuilder stringBuilder = new StringBuilder();
+            List<Component> branch = getReferenceBranch();
+            for (Component component : branch) {
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append("/");
+                }
+                stringBuilder.append(component.getName());
+            }
+            return stringBuilder.toString();
+        }
+
+        public Component getPage() {
+            Route.Component cursor = this;
+            while (cursor.getParent() != null) {
+                cursor = (cursor.getParent());
+            }
+
+            return cursor;
+        }
+
+        public boolean isLeaf() {
+            return this.components.isEmpty();
+        }
+
     }
 
     public class Parameter {

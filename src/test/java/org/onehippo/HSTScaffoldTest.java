@@ -63,8 +63,9 @@ public class HSTScaffoldTest extends TestCase {
 
         Route.Component header = components.get(0);
         String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+        String componentPath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
         //todo assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_TEMPLATE_PATH+"/text/header.ftl").equals(header.getTemplateFilePath()));
-        assertTrue((projectDir+"/"+HSTScaffold.DEFAULT_COMPONENT_PATH+"/HeaderComponent.java").equals(header.getPathJavaClass()));
+        assertTrue((projectDir+"/"+componentPath+"/HeaderComponent.java").equals(header.getPathJavaClass()));
     }
 
     public void testScaffoldRoutes() throws IOException {

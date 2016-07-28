@@ -20,6 +20,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     private Node projectHstConfRoot;
     private File projectDir;
     private File scaffoldDir;
+    private Map<String, String> references = new HashMap<String, String>();
 
     private Rollback rollback;
     private TemplateBuilder templateBuilder;
@@ -45,8 +46,6 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     }
 
     public void build(boolean dryRun) throws IOException, RepositoryException {
-        backup(dryRun);
-
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         for (Route route : scaffold.getRoutes()) {
             try {
@@ -62,27 +61,65 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     }
 
-
-
-    private void buildWorkspaceComponentHstConf(Route.Component component, boolean dryRun) throws RepositoryException {
-        if (!projectHstConfRoot.hasNode("hst:components")) {
-            throw new RepositoryException("HST configuration child hst:components misses.");
+    private Node buildWorkspaceComponentHstConf(Route.Component component, boolean dryRun) throws RepositoryException {
+        if (!component.isLeaf()) {
+            log.error("Component is not a leaf");
+            return null;
         }
 
-        Node components = projectHstConfRoot.getNode("hst:components");
-        String nodeName = component.getName();
-        int index = 1;
-        while (components.hasNode(nodeName)) { // todo, improve ???
-            nodeName = component.getName()+"_"+index;
-            index++;
+        if (!projectHstConfRoot.hasNode("hst:workspace")) {
+            throw new RepositoryException("HST configuration child hst:workspace misses.");
         }
 
-        log.info(String.format("%s New component node %s",(dryRun? "DRYRUN " : ""), components.getPath()+"/"+nodeName+"."));
-        if (!dryRun) {
-            Node newComponent = components.addNode(nodeName, "hst:component");
-            newComponent.setProperty("hst:componentclassname", component.getJavaClass());
-            newComponent.setProperty("hst:template", component.getTemplateName());
+        Node workspace = projectHstConfRoot.getNode("hst:workspace");
+        if (!workspace.hasNode("hst:containers")) {
+            throw new RepositoryException("HST configuration child hst:containers misses.");
         }
+
+        log.debug(String.format("%s Build workspace component %s.", (dryRun? "DRYRUN " : ""), component.getComponentPath()));
+        if (dryRun) {
+            return null;
+        }
+
+        Node containers = workspace.getNode("hst:containers");
+
+        // find container parent
+        List<Route.Component> parents = component.getParents();
+        Route.Component page = parents.remove(0);
+
+        // root
+        Node container;
+        if (!containers.hasNode(page.getName())) {
+            container = containers.addNode(page.getName(), "hst:containercomponentfolder");
+        } else {
+            container = containers.getNode(page.getName());
+        }
+
+        for (Route.Component branch : component.getReferenceBranch()) {
+            if (container.hasNode(branch.getName())) {
+                container = container.getNode(branch.getName());
+            } else {
+                container = container.addNode(branch.getName(), "hst:containercomponent");
+                container.setProperty("hst:xtype", "HST.vBox");
+            }
+        }
+
+        if (container.hasNode(component.getName())) {
+            return container.getNode(component.getName());
+        }
+
+        // let's create structure, if missing
+        if (!container.isNodeType("hst:containercomponent")) {
+            container = container.addNode(component.getName(), "hst:containercomponent");
+            container.setProperty("hst:xtype", "HST.vBox");
+        }
+
+        Node containerItem = container.addNode(component.getName(), "hst:containeritemcomponent");
+        containerItem.setProperty("hst:componentclassname", component.getJavaClass());
+        containerItem.setProperty("hst:template", component.getTemplateName());
+        containerItem.setProperty("hst:xtype", "HST.Item");
+
+        return containerItem;
     }
 
     private void buildPages(Route route, boolean dryRun) throws IOException, RepositoryException {
@@ -95,41 +132,48 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     private void buildPageNode(Route route, Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
         log.info(String.format("%s Build Page Node %s component %s", dryRun? "DRYRUN " : "", root != null? root.getPath() : "", component.getName()));
 
-        if (component.isPointer()) {
-            // todo
-        } else if (component.isReference()) {
-            // todo
-            Node referenceComponent = buildWorkspaceComponent(component, dryRun);
-            addPageComponentReference(root, component, dryRun);
+        if (component.isReference()) {
+            buildWorkspaceComponent(component, dryRun);
+            // todo referencePath
+            String referencePath = component.getPage().getName()+"/"+component.getName();
+            addPageComponentReference(root, component.getName(), referencePath, dryRun);
+            references.put(component.getName(), referencePath);
+        } else if (component.isPointer()) {
+            String referencePath = references.get(component.getName());
+            addPageComponentReference(root, component.getName(), referencePath, dryRun);
         } else {
-            Node newComponent = null;
+            Node newComponentNode = null;
             if (dryRun) {
                 log.info(String.format("%s page %s, adding node %s", dryRun? "DRYRUN " : "", route.getPageConstruct(), component.getName()));
             } else {
-                newComponent = addPageComonentNode(root, component, dryRun);
+                newComponentNode = addPageComponentNode(root, component, dryRun);
             }
 
-            for (Route.Component child : component.getComponents()) {
-                buildPageNode(route, newComponent, child, dryRun);
+            for (Route.Component childComponent : component.getComponents()) {
+                buildPageNode(route, newComponentNode, childComponent, dryRun);
             }
         }
     }
 
-    private Node addPageComponentReference(Node root, Route.Component component, boolean dryRun) throws RepositoryException {
+    private Node addPageComponentReference(Node root, String name, String referencePath, boolean dryRun) throws RepositoryException {
+        log.info(String.format("%s Adding page component reference %s->%s", dryRun? "DRYRUN" : "", name, referencePath));
+        if (dryRun) {
+            return null;
+        }
+
         Node componentReference;
 
-        if (root.hasNode(component.getName())) {
-            componentReference = root.getNode(component.getName());
+        if (root.hasNode(name)) {
+            componentReference = root.getNode(name);
         } else {
-            componentReference = root.addNode(component.getName(), "hst:containercomponentreference");
+            componentReference = root.addNode(name, "hst:containercomponentreference");
+            componentReference.setProperty("hst:referencecomponent", referencePath);
         }
 
-        // todo
-
-        return null;
+        return componentReference;
     }
 
-    private Node addPageComonentNode(Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
+    private Node addPageComponentNode(Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
         Node newComponent;
         if (root.hasNode(component.getName())) {
             newComponent = root.getNode(component.getName());
@@ -137,27 +181,38 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             newComponent = root.addNode(component.getName(), "hst:component");
             newComponent.addMixin("hst:descriptive");
             newComponent.addMixin("mix:referenceable");
-
-            log.debug(String.format("%s Build %s template", (dryRun? "DRYRUN " : ""), component.getName()));
-            templateBuilder.buildTemplateFtlFile(component, dryRun);
-            addHstTemplateConfig(component);
-
-            newComponent.setProperty("hst:template", component.getTemplateName());
         }
+
+        log.debug(String.format("%s Build %s template", (dryRun? "DRYRUN " : ""), component.getName()));
+
+        // templates are unique, reuse templates
+        if (addHstTemplateConfig(component)) {
+            templateBuilder.buildTemplateFtlFile(component, dryRun);
+        }
+
+        newComponent.setProperty("hst:template", component.getTemplateName());
+
+        templateBuilder.buildComponentJavaFile(component, dryRun);
+        newComponent.setProperty("hst:componentclassname", component.getJavaClass());
+
         return newComponent;
     }
 
-    private void addHstTemplateConfig(Route.Component component) throws RepositoryException {
+    private boolean addHstTemplateConfig(Route.Component component) throws RepositoryException {
         if (!projectHstConfRoot.hasNode("hst:templates")) {
             log.error("Project hst template node is missing.");
         }
 
         Node templates = projectHstConfRoot.getNode("hst:templates");
-        Node newTemplate = templates.addNode(component.getName(), "hst:template");
-        newTemplate.setProperty("hst:renderpath", component.getWebfilePath());
+        if (!templates.hasNode(component.getName())) {
+            Node newTemplate = templates.addNode(component.getName(), "hst:template");
+            newTemplate.setProperty("hst:renderpath", component.getWebfilePath());
+            return true;
+        }
+        return false;
     }
 
-    private Node buildWorkspaceComponent(Route.Component component, boolean dryRun) throws IOException, RepositoryException {
+    private void buildWorkspaceComponent(Route.Component component, boolean dryRun) throws IOException, RepositoryException {
         log.debug(String.format("%s Build %s java file", (dryRun? "DRYRUN " : ""), component.getName()));
         templateBuilder.buildComponentJavaFile(component, dryRun);
 
@@ -166,9 +221,14 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         addHstTemplateConfig(component);
 
         log.debug(String.format("%s Build %s hst conf", (dryRun? "DRYRUN " : ""), component.getName()));
-        buildWorkspaceComponentHstConf(component, dryRun);
 
-        return null; // todo
+        if (component.isLeaf()) {
+            buildWorkspaceComponentHstConf(component, dryRun);
+        }
+
+        for (Route.Component childComponent : component.getComponents()) {
+            buildWorkspaceComponent(childComponent, dryRun);
+        }
     }
 
     /*
@@ -198,7 +258,6 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 //        ValueFactory valueFactory=context.getSession().getValueFactory();
 //        Value[] values={valueFactory.createValue("testValue")};
 //        property=node.setProperty("testProperty",values);
-
     }
 
     private void buildSitemapItem(Route route, boolean dryRun) throws RepositoryException {
@@ -206,21 +265,29 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             throw new RepositoryException("HST configuration child hst:sitemap misses.");
         }
 
-        Scanner scanner = new Scanner(route.getUrl());
-        scanner.useDelimiter(Pattern.compile("/"));
-
         Node sitemapItem = projectHstConfRoot.getNode("hst:sitemap");
-
-        if (sitemapItem == null) {
-            log.error(String.format("Sitemap items missing"));
-            return;
-        }
 
         String contentPath = route.getContentPath();
         int index = 1;
         for (Route.Parameter param : route.getParameters()) {
             contentPath = contentPath.replace(param.name+":"+param.type, "${"+index+"}");
             index++;
+        }
+
+        if ("/".equals(StringUtils.trim(route.getUrl()))) {
+            Node newSitemapItem = addNode(sitemapItem, "root", "hst:sitemapitem", dryRun);
+            newSitemapItem.setProperty("hst:componentconfigurationid", "hst:pages/" + route.getPage().getName());
+            // todo algorithm to create contentPaths, url structure and content path may vary
+            newSitemapItem.setProperty("hst:relativecontentpath", contentPath.substring(1));
+            return;
+        }
+
+        Scanner scanner = new Scanner(route.getUrl());
+        scanner.useDelimiter(Pattern.compile("/"));
+
+        if (sitemapItem == null) {
+            log.error(String.format("Sitemap items missing"));
+            return;
         }
 
         while (scanner.hasNext()) {
@@ -230,8 +297,6 @@ public class RepositoryBuilder implements ScaffoldBuilder {
                 sitemapItem = addNode(sitemapItem, "_default_", "hst:sitemapitem", dryRun);
             } else if (path.startsWith("*")) {
                 sitemapItem = addNode(sitemapItem, "_any_", "hst:sitemapitem", dryRun);
-            } else if ("/".equals(path)) {
-                sitemapItem = addNode(sitemapItem, "root", "hst:sitemapitem", dryRun);
             } else {
                 sitemapItem = addNode(sitemapItem, path, "hst:sitemapitem", dryRun);
             }

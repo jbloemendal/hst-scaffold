@@ -31,8 +31,9 @@ java -jar sfd.jar [options] [args]
 Options
 -h     --help               Show help
 -b     --build              Build configuration from scaffold.
+-u     --updateForce        Update and overwrite configuration from scaffold.
+-d     --dryrun             Dryrun
 -c     --configuration      Custom configuration file.
--u     --update             Update configuration from scaffold
 -s     --scaffold           Build scaffold from existing project configuration (reverse).
 -r     --rollback           Rollback Build / Update / Scaffold.
 ```
