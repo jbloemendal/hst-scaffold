@@ -15,12 +15,19 @@ Example Scaffold (myhippoproject/scaffold.hst):
 #HST scaffold example
 
 #URL              CONTENTPATH                   COMPONENTS
-/                 /home                          home(header,main(banner, doc),footer)      # home page
-/simple           /simple                        simple                                     # simple page
-/contact          /contact                       text(header,main(banner, doc),footer)      # text page
-/news/:date/:id   /news/date:String/id:String    news(header,main(banner, doc),footer)      # news page
-/news             /news                          news(header, list, footer)                 # news overview page
-/text/*path       /text/path:String              text(header,main(banner, doc),footer)      # text page
+/                 /home                          home(&header(menu, titlebanner),main(banner, doc),footer) # home page
+/simple           /simple                        simple                                                    # simple page
+/contact          /contact                       text(*header,main(banner, doc),footer)                    # text page
+/news/:date/:id   /news/date:String/id:String    news(*header,main(banner, doc),footer)                    # news page
+/news             /news                          news(*header,list, footer)                                # news overview page
+/text/*path       /text/path:String              text(*header,main(banner, doc),footer)                    # text page
+```
+
+Conventions:
+```
+- template and component names are unique
+- define abstract/common components at the top
+...
 ```
 
 Usage:
@@ -31,9 +38,10 @@ java -jar sfd.jar [options] [args]
 Options
 -h     --help               Show help
 -b     --build              Build configuration from scaffold.
--u     --updateForce        Update and overwrite configuration from scaffold.
--d     --dryrun             Dryrun
+-u     --updateForce        Update and overwrite configuration from scaffold (interactive).
+-w     --dryrun             Dryrun
 -c     --configuration      Custom configuration file.
 -s     --scaffold           Build scaffold from existing project configuration (reverse).
 -r     --rollback           Rollback Build / Update / Scaffold.
+-d     --diagnose           Find outdated components/sitemapitems/templates
 ```
