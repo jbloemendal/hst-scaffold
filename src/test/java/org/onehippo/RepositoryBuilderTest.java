@@ -63,8 +63,22 @@ public class RepositoryBuilderTest extends TestCase {
         return true;
     }
 
-    private boolean areTemplateIncludesValid(Node hstSiteCnfRoot, Route.Component component) throws IOException {
-        String template = TestUtils.readFile(component.getTemplateFilePath());
+    private boolean areTemplateIncludesValid(Node templates, Route.Component component) throws IOException, RepositoryException {
+        Node templateNode = templates.getNode(component.getName());
+        if (!templateNode.hasProperty("hst:renderpath")) {
+            return false;
+        }
+        String renderPath = templateNode.getProperty("hst:renderpath").getString();
+
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+        String basePath = HSTScaffold.properties.getProperty(HSTScaffold.WEBFILE_BASE_PATH);
+
+        renderPath = renderPath.replace(basePath+projectName, "");
+
+        String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+        String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+
+        String template = TestUtils.readFile(projectDir+"/"+templatePath+"/"+renderPath);
         for (Route.Component child : component.getComponents()) {
             if (!template.contains("<@hst.include ref=\""+child.getName()+"\" />")) {
                 return false;
@@ -74,22 +88,6 @@ public class RepositoryBuilderTest extends TestCase {
     }
 
     private boolean validateComponent(Node templates, Node root, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
-        /*
-        // validate
-        <sv:property sv:name="jcr:primaryType" sv:type="Name">
-        <sv:value>hst:containeritemcomponent</sv:value>
-        </sv:property>
-        <sv:property sv:name="hst:componentclassname" sv:type="String">
-        <sv:value>org.onehippo.cms7.essentials.components.EssentialsCarouselComponent</sv:value>
-        </sv:property>
-        <sv:property sv:name="hst:template" sv:type="String">
-        <sv:value>essentials-carousel</sv:value>
-        </sv:property>
-        <sv:property sv:name="hst:xtype" sv:type="String">
-        <sv:value>HST.Item</sv:value>
-        </sv:property>
-        */
-
         // todo add test for referenced component structures
         if (component.isReference() || component.isPointer()) {
             // skip
@@ -103,10 +101,9 @@ public class RepositoryBuilderTest extends TestCase {
         Node componentNode = root.getNode(component.getName());
         if (!isHstComponentConfValid(component, componentNode)
                 || !isHstTemplateConfValid(templates, component)
-                || !areTemplateIncludesValid(root, component)) {
+                || !areTemplateIncludesValid(templates, component)) {
             return false;
         }
-
 
         for (Route.Component child : component.getComponents()) {
             if (!componentNode.hasNode(child.getName())) {
@@ -143,6 +140,7 @@ public class RepositoryBuilderTest extends TestCase {
 
         return true;
     }
+
 
     private boolean validateSitemap(Node sitemap, Route route) throws RepositoryException {
         // e. g. /news/:date/:id or // /text/*path
@@ -202,7 +200,7 @@ public class RepositoryBuilderTest extends TestCase {
         try {
             scaffold = HSTScaffold.instance("./myhippoproject");
 
-            Node hst = JcrMockUp.mockJcrNode("/hst.xml");
+            Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
 
             scaffold.setBuilder(new RepositoryBuilder(hst));
             scaffold.build(false);
@@ -229,5 +227,6 @@ public class RepositoryBuilderTest extends TestCase {
         final Map<String, String> after = TestUtils.dirHash(projectDir);
         assertFalse(TestUtils.dirChanged(before, after));
     }
+
 
 }

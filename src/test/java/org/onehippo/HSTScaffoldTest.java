@@ -77,7 +77,7 @@ public class HSTScaffoldTest extends TestCase {
     public void testUrlParameter() throws IOException {
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         List<Route> routes = scaffold.getRoutes();
-        List<Route.Parameter> urlParameters = routes.get(3).getParameters();
+        List<Route.Parameter> urlParameters = routes.get(2).getParameters();
         String type = urlParameters.get(0).type;
         assertEquals("String", type);
     }
@@ -96,7 +96,7 @@ public class HSTScaffoldTest extends TestCase {
         List<Route> routes = scaffold.getRoutes();
         assertTrue(routes.get(0).getPage().getComponents().get(1).getName().equals("main"));
         assertTrue(routes.get(0).getPage().getComponents().get(1).isReference());
-        assertTrue(routes.get(3).getPage().getComponents().get(1).isPointer());
+        assertTrue(routes.get(2).getPage().getComponents().get(1).isPointer());
     }
 
 }

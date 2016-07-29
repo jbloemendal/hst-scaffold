@@ -108,6 +108,10 @@ public class Route {
             return pointer;
         }
 
+        public boolean isReferenced() {
+            return false;
+        }
+
         public void setPointer(boolean pointer) {
             this.pointer = pointer;
         }
