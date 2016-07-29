@@ -19,7 +19,7 @@ public class RepositoryBuilderContentStructureTest extends TestCase {
     private File projectDir;
     final static Logger log = Logger.getLogger(RepositoryBuilder.class);
 
-    private Pattern PATH_SEGMENT = Pattern.compile("/[^/]+/");
+    public Pattern PATH_SEGMENT = Pattern.compile("/[^/]+/");
 
     /**
      * Create the test case
@@ -59,13 +59,12 @@ public class RepositoryBuilderContentStructureTest extends TestCase {
                 Node folderRoot = documents;
                 while (matcher.find()) {
                     String folderName = matcher.group().replaceAll("/", "");
-                    if (!folderName.contains(":")) {
-                        continue;
+                    if (folderName.contains(":")) {
+                        break;
                     }
                     assertTrue(folderRoot.hasNode(folderName));
                     folderRoot = folderRoot.getNode(folderName);
                     folderRoot.hasProperty("hippostd:foldertype");
-                    assertTrue(folderRoot.isNodeType("mix:referenceable"));
                 }
             }
         } catch (Exception e) {

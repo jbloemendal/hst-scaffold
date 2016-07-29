@@ -8,8 +8,11 @@ import org.onehippo.Route;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RepositoryBuilder implements ScaffoldBuilder {
@@ -24,6 +27,8 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     private Rollback rollback;
     private TemplateBuilder templateBuilder;
+
+    public Pattern PATH_SEGMENT = Pattern.compile("/[^/]+/");
 
     public RepositoryBuilder(Node hstRoot) throws RepositoryException, IOException {
         this.hstRoot = hstRoot;
@@ -231,33 +236,29 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
     }
 
-    /*
-    /news/date:String/id:String
-    /news
-    */
     private void buildContent(Route route, boolean dryRun) throws RepositoryException {
-        // todo algorithm to create contentPaths
-//        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
-//
-//        Node documents = projectHstConfRoot.getSession().getNode("/content/documents");
-//
-//        String contentPath = route.getContentPath();
-//        List<Route.Parameter> parameters = route.getParameters();
-//
-//        int index = 1;
-//        for (Route.Parameter param : parameters) {
-//            contentPath = contentPath.replace("/"+param.name+":"+param.type, "");
-//            index++;
-//        }
-//
-//        ValueFactory valueFactory = projectHstConfRoot.getSession().getValueFactory();
-//
-//        Node siteContentRoot = documents.addNode(projectName, "hippostd:folder");
-//        siteContentRoot.setProperty("hippostd:foldertype", valueFactory.);
-//
-//        ValueFactory valueFactory=context.getSession().getValueFactory();
-//        Value[] values={valueFactory.createValue("testValue")};
-//        property=node.setProperty("testProperty",values);
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+        Node documents = projectHstConfRoot.getSession().getRootNode().getNode("content").getNode("documents");
+
+        if (!documents.hasNode(projectName)) {
+            throw new RepositoryException(String.format("Project node is missing.", documents.getPath()+"/"+projectName));
+        }
+
+        Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath());
+        Node folderRoot = documents.getNode(projectName);
+        while (matcher.find()) {
+            String folderName = matcher.group().replaceAll("/", "");
+            if (folderName.contains(":")) {
+                break;
+            }
+            if (!folderRoot.hasNode(folderName)) {
+                folderRoot = folderRoot.addNode(folderName, "hippostd:foldertype");
+                folderRoot.setProperty("hippostd:foldertype", new String[] {"new-translated-folder", "new-document"});
+                folderRoot.addMixin("mix:referenceable");
+            } else {
+                folderRoot = folderRoot.getNode(folderName);
+            }
+        }
     }
 
     private void buildSitemapItem(Route route, boolean dryRun) throws RepositoryException {
