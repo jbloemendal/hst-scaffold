@@ -7,6 +7,12 @@ Scaffold your projects Hippo Site Toolkit configuration from text file.
 
 Build:
 ```
+# build embedded project
+cd myhippoproject
+mvn clean verify
+
+# build scaffold
+cd .. 
 mvn clean verify
 ```
 
