@@ -1,6 +1,7 @@
 package org.onehippo;
 
 import junit.framework.TestCase;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.build.RepositoryBuilder;
 import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
@@ -23,6 +24,7 @@ public class RepositoryBuilderTest extends TestCase {
     public static final String HST_COMPONENTCLASSNAME = "hst:componentclassname";
     public static final String HST_TEMPLATE = "hst:template";
     public static final String HST_CONTAINERITEMCOMPONENT = "hst:containeritemcomponent";
+    public static final String HST_COMPONENT = "hst:component";
     private File projectDir;
 
     /**
@@ -37,8 +39,8 @@ public class RepositoryBuilderTest extends TestCase {
         projectDir = new File("./myhippoproject");
     }
 
-    private boolean isHstTemplateConfValid(Node hstSiteCnfRoot, Route.Component component) throws RepositoryException {
-      /*
+    private boolean isHstTemplateConfValid(Node templates, Route.Component component) throws RepositoryException {
+        /*
         <sv:node sv:name="base-top-menu">
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
         <sv:value>hst:template</sv:value>
@@ -48,17 +50,13 @@ public class RepositoryBuilderTest extends TestCase {
         </sv:property>
         </sv:node>
         */
-        Node templates = hstSiteCnfRoot.getNode("hst:templates");
 
         if (!templates.hasNode(component.getTemplateName())) {
             return false;
         }
 
         Node template = templates.getNode(component.getTemplateName());
-        if (!template.getProperty("jcr:primaryType").equals("hst:template")) {
-            return false;
-        }
-        if (!template.getProperty("hst:renderpath").equals(component.getWebfilePath())) {
+        if (!"hst:template".equals(template.getProperty("jcr:primaryType").getString())) {
             return false;
         }
 
@@ -68,14 +66,14 @@ public class RepositoryBuilderTest extends TestCase {
     private boolean areTemplateIncludesValid(Node hstSiteCnfRoot, Route.Component component) throws IOException {
         String template = TestUtils.readFile(component.getTemplateFilePath());
         for (Route.Component child : component.getComponents()) {
-            if (template.contains("<@hst.include ref=\""+child.getName()+"\">")) {
+            if (!template.contains("<@hst.include ref=\""+child.getName()+"\" />")) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean validateComponent(Node hstSiteCnfRoot, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
+    private boolean validateComponent(Node templates, Node root, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
         /*
         // validate
         <sv:property sv:name="jcr:primaryType" sv:type="Name">
@@ -92,10 +90,20 @@ public class RepositoryBuilderTest extends TestCase {
         </sv:property>
         */
 
-        Node componentNode = hstSiteCnfRoot.getNode(component.getComponentPath());
+        // todo add test for referenced component structures
+        if (component.isReference() || component.isPointer()) {
+            // skip
+            return true;
+        }
+
+        if (!root.hasNode(component.getName())) {
+            return false;
+        }
+
+        Node componentNode = root.getNode(component.getName());
         if (!isHstComponentConfValid(component, componentNode)
-                || !isHstTemplateConfValid(hstSiteCnfRoot, component)
-                || !areTemplateIncludesValid(hstSiteCnfRoot, component)) {
+                || !isHstTemplateConfValid(templates, component)
+                || !areTemplateIncludesValid(root, component)) {
             return false;
         }
 
@@ -105,9 +113,7 @@ public class RepositoryBuilderTest extends TestCase {
                 return false;
             }
 
-            if (!validateComponent(hstSiteCnfRoot, child)) {
-                return false;
-            }
+            return validateComponent(templates, componentNode, child);
         }
 
         return true;
@@ -119,11 +125,11 @@ public class RepositoryBuilderTest extends TestCase {
         }
 
         if (!componentNode.hasProperty(JCR_PRIMARY_TYPE)
-                || !componentNode.getProperty(JCR_PRIMARY_TYPE).equals(HST_CONTAINERITEMCOMPONENT)) {
+                || !HST_COMPONENT.equals(componentNode.getProperty(JCR_PRIMARY_TYPE).getString())) {
             return false;
         }
         if (!componentNode.hasProperty(HST_COMPONENTCLASSNAME)
-                || !component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getValue().getString())) {
+                || !component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getString())) {
             return false;
         }
 
@@ -131,7 +137,7 @@ public class RepositoryBuilderTest extends TestCase {
         assertTrue(javaFile.exists());
 
         if (!componentNode.hasProperty(HST_TEMPLATE)
-                || !component.getTemplateFilePath().equals(componentNode.getProperty(HST_TEMPLATE).getValue().getString())) {
+                || !component.getName().equals(componentNode.getProperty(HST_TEMPLATE).getString())) {
             return false;
         }
 
@@ -139,22 +145,6 @@ public class RepositoryBuilderTest extends TestCase {
     }
 
     private boolean validateSitemap(Node sitemap, Route route) throws RepositoryException {
-        //        <?xml version="1.0" encoding="UTF-8"?>
-        //        <sv:node sv:name="_any_" xmlns:sv="http://www.jcp.org/jcr/sv/1.0">
-        //        <sv:property sv:name="jcr:primaryType" sv:type="Name">
-        //        <sv:value>hst:sitemapitem</sv:value>
-        //        </sv:property>
-        //        <sv:property sv:name="jcr:uuid" sv:type="String">
-        //        <sv:value>5734c9df-401c-4acc-99ef-ee64357fe348</sv:value>
-        //        </sv:property>
-        //        <sv:property sv:name="hst:componentconfigurationid" sv:type="String">
-        //        <sv:value>hst:pages/newslist</sv:value>
-        //        </sv:property>
-        //        <sv:property sv:name="hst:relativecontentpath" sv:type="String">
-        //        <sv:value>${parent}/${1}</sv:value>
-        //        </sv:property>
-        //        </sv:node>
-
         // e. g. /news/:date/:id or // /text/*path
         String urlMatcher = route.getUrl();
         // e. g. /news/date:String/id:String
@@ -165,20 +155,20 @@ public class RepositoryBuilderTest extends TestCase {
         scanner.useDelimiter(Pattern.compile("/"));
 
         Node sitemapItem = sitemap;
-        while (scanner.hasNext()) {
-            String path = scanner.next();
-            if (path.startsWith(":")) {
-                sitemapItem = sitemapItem.getNode("_default_");
-            } else if (path.startsWith("*")) {
-                sitemapItem = sitemapItem.getNode("_any_");
-            } else if ("/".equals(path)) {
-                sitemapItem = sitemapItem.getNode("root");
-            } else {
-                sitemapItem = sitemapItem.getNode(path);
+        if ("/".equals(StringUtils.trim(urlMatcher))) {
+            sitemapItem = sitemapItem.getNode("root");
+        } else {
+            while (scanner.hasNext()) {
+                String path = scanner.next();
+                if (path.startsWith(":")) {
+                    sitemapItem = sitemapItem.getNode("_default_");
+                } else if (path.startsWith("*")) {
+                    sitemapItem = sitemapItem.getNode("_any_");
+                } else {
+                    sitemapItem = sitemapItem.getNode(path);
+                }
+                // todo add tests here as well
             }
-
-            // todo add tests here as well
-
         }
 
         if (!sitemapItem.hasProperty("hst:componentconfigurationid")) {
@@ -193,7 +183,7 @@ public class RepositoryBuilderTest extends TestCase {
 
         int index = 1;
         for (Route.Parameter param : parameters) {
-            contentPath.replace(param.name+":"+param.type, "${"+index+"}");
+            contentPath = contentPath.replace(param.name+":"+param.type, "${"+index+"}");
             index++;
         }
 
@@ -219,16 +209,14 @@ public class RepositoryBuilderTest extends TestCase {
 
             String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
-            Node components = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:components");
+            Node pages = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:pages");
             Node sitemap = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemap");
+            Node templates = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:templates");
 
             for (Route route : scaffold.getRoutes()) {
-                // todo depends on  "Create Test Project Conf Setup #17"
-                 // validateSitemap(sitemap, route);
-                 // validateComponent(components, route.getPage());
+                assertTrue(String.format("assert valid sitemap for route %s", route.getUrl()), validateSitemap(sitemap, route));
+                assertTrue(String.format("assert valid component for route %s -> %s", route.getUrl(), route.getPageConstruct()), validateComponent(templates, pages, route.getPage()));
             }
-
-
 
         } catch (Exception e) {
             log.error("Error testing components, XPath expression", e);
