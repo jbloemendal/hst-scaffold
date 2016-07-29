@@ -85,7 +85,7 @@ public class HSTScaffoldTest extends TestCase {
     public void testWildcardUrlParameter() throws IOException {
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
         List<Route> routes = scaffold.getRoutes();
-        List<Route.Parameter> urlParameters = routes.get(5).getParameters();
+        List<Route.Parameter> urlParameters = routes.get(4).getParameters();
         String type = urlParameters.get(0).type;
         assertEquals("String", type);
     }

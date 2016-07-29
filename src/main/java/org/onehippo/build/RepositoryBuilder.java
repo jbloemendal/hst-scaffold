@@ -28,7 +28,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     private Rollback rollback;
     private TemplateBuilder templateBuilder;
 
-    public Pattern PATH_SEGMENT = Pattern.compile("/[^/]+/");
+    public Pattern PATH_SEGMENT = Pattern.compile("[^/]+/");
 
     public RepositoryBuilder(Node hstRoot) throws RepositoryException, IOException {
         this.hstRoot = hstRoot;
@@ -237,6 +237,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     }
 
     private void buildContent(Route route, boolean dryRun) throws RepositoryException {
+        log.info(String.format("Build content structure %s", route.getContentPath()));
         String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
         Node documents = projectHstConfRoot.getSession().getRootNode().getNode("content").getNode("documents");
 
@@ -244,7 +245,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             throw new RepositoryException(String.format("Project node is missing.", documents.getPath()+"/"+projectName));
         }
 
-        Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath());
+        Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath().substring(1));
         Node folderRoot = documents.getNode(projectName);
         while (matcher.find()) {
             String folderName = matcher.group().replaceAll("/", "");
@@ -252,9 +253,10 @@ public class RepositoryBuilder implements ScaffoldBuilder {
                 break;
             }
             if (!folderRoot.hasNode(folderName)) {
-                folderRoot = folderRoot.addNode(folderName, "hippostd:foldertype");
+                folderRoot = folderRoot.addNode(folderName, "hippostd:folder");
                 folderRoot.setProperty("hippostd:foldertype", new String[] {"new-translated-folder", "new-document"});
                 folderRoot.addMixin("mix:referenceable");
+                log.info(String.format("Added content structure %s", folderRoot.getPath()));
             } else {
                 folderRoot = folderRoot.getNode(folderName);
             }

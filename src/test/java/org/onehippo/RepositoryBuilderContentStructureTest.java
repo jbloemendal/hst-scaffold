@@ -19,7 +19,7 @@ public class RepositoryBuilderContentStructureTest extends TestCase {
     private File projectDir;
     final static Logger log = Logger.getLogger(RepositoryBuilder.class);
 
-    public Pattern PATH_SEGMENT = Pattern.compile("/[^/]+/");
+    public Pattern PATH_SEGMENT = Pattern.compile("[^/]+/");
 
     /**
      * Create the test case
@@ -55,7 +55,7 @@ public class RepositoryBuilderContentStructureTest extends TestCase {
 
             Node documents = root.getNode("content").getNode("documents").getNode(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME));
             for (Route route : scaffold.getRoutes()) {
-                Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath());
+                Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath().substring(1));
                 Node folderRoot = documents;
                 while (matcher.find()) {
                     String folderName = matcher.group().replaceAll("/", "");
