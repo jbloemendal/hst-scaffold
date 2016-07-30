@@ -20,13 +20,14 @@ Example Scaffold (myhippoproject/scaffold.hst):
 ```
 #HST scaffold example
 
-#URL              CONTENTPATH                   COMPONENTS
-/                 /home                          home(&header(menu, titlebanner), &main(banner, doc),footer)
-/contact          /contact                       text(*header,*main,footer)                    
-/news/:date/:id   /news/date:String/id:String    news(*header,*main,footer)                    
-/news             /news                          news(*header,newslist, footer)                    
-/text/*path       /texts/path:String             text(*header,*main,footer)                    
-/about            /texts/about                   text(*header,*main,footer)
+#URL                   CONTENTPATH                          COMPONENTS
+/                       /home                                home(header,&main(banner, doc),footer) # home page
+/contact                /contact                             text(header,*main,footer)              # text page
+/simple                 /simple                              simple                                 # simple page
+/news/:date/:id         /news/date:String/id:String          news(header,*main,footer)              # news page
+/news                   /news                                newsoverview(header,list, footer)      # news overview page
+/text/*path             /text/path:String                    text(header,*main,footer)
+/text/content/*path     /text/content/path:String            test(header,*main,footer)
 ```
 
 Conventions:
