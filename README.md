@@ -27,7 +27,7 @@ Example Scaffold (myhippoproject/scaffold.hst):
 /news/:date/:id         /news/date:String/id:String          news(header,*main,footer)              # news page
 /news                   /news                                newsoverview(header,list, footer)      # news overview page
 /text/*path             /text/path:String                    text(header,*main,footer)
-/text/content/*path     /text/content/path:String            test(header,*main,footer)
+/text/content/*path     /text/content/path:String            content(header,*main,footer)
 ```
 
 Conventions:
