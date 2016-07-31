@@ -147,12 +147,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             String referencePath = references.get(component.getName());
             addPageComponentReference(root, component.getName(), referencePath, dryRun);
         } else {
-            Node newComponentNode = null;
-            if (dryRun) {
-                log.info(String.format("%s page %s, adding node %s", dryRun? "DRYRUN " : "", route.getPageConstruct(), component.getName()));
-            } else {
-                newComponentNode = addPageComponentNode(root, component, dryRun);
-            }
+            Node newComponentNode = addPageComponentNode(root, component, dryRun);
 
             for (Route.Component childComponent : component.getComponents()) {
                 buildPageNode(route, newComponentNode, childComponent, dryRun);
@@ -179,37 +174,44 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     }
 
     private Node addPageComponentNode(Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
-        Node newComponent;
+        // templates are unique, reuse templates
+        log.debug(String.format("%s Build %s template", (dryRun? "DRYRUN " : ""), component.getName()));
+        if (addHstTemplateConfig(component, dryRun)) {
+            templateBuilder.buildTemplateFtlFile(component, dryRun);
+        }
+
+        templateBuilder.buildComponentJavaFile(component, dryRun);
+
+        if (dryRun) {
+            return null;
+        }
+        Node newComponent = null;
+
         if (root.hasNode(component.getName())) {
             newComponent = root.getNode(component.getName());
         } else {
+
             newComponent = root.addNode(component.getName(), "hst:component");
             newComponent.addMixin("hst:descriptive");
             newComponent.addMixin("mix:referenceable");
         }
 
-        log.debug(String.format("%s Build %s template", (dryRun? "DRYRUN " : ""), component.getName()));
-
-        // templates are unique, reuse templates
-        if (addHstTemplateConfig(component)) {
-            templateBuilder.buildTemplateFtlFile(component, dryRun);
-        }
-
         newComponent.setProperty("hst:template", component.getTemplateName());
-
-        templateBuilder.buildComponentJavaFile(component, dryRun);
         newComponent.setProperty("hst:componentclassname", component.getJavaClass());
 
         return newComponent;
     }
 
-    private boolean addHstTemplateConfig(Route.Component component) throws RepositoryException {
+    private boolean addHstTemplateConfig(Route.Component component, boolean dryRun) throws RepositoryException {
         if (!projectHstConfRoot.hasNode("hst:templates")) {
             log.error("Project hst template node is missing.");
         }
 
         Node templates = projectHstConfRoot.getNode("hst:templates");
         if (!templates.hasNode(component.getName())) {
+            if (dryRun) {
+                return true;
+            }
             Node newTemplate = templates.addNode(component.getName(), "hst:template");
             newTemplate.setProperty("hst:renderpath", component.getWebfilePath());
             return true;
@@ -223,7 +225,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
         log.debug(String.format("%s Build %s template", (dryRun? "DRYRUN " : ""), component.getName()));
         templateBuilder.buildTemplateFtlFile(component, dryRun);
-        addHstTemplateConfig(component);
+        addHstTemplateConfig(component, dryRun);
 
         log.debug(String.format("%s Build %s hst conf", (dryRun? "DRYRUN " : ""), component.getName()));
 
@@ -237,7 +239,10 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     }
 
     private void buildContent(Route route, boolean dryRun) throws RepositoryException {
-        log.info(String.format("Build content structure %s", route.getContentPath()));
+        log.info(String.format("%s Build content structure %s", (dryRun? "DRYRUN" : ""), route.getContentPath()));
+        if (dryRun) {
+            return;
+        }
         String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
         Node documents = projectHstConfRoot.getSession().getRootNode().getNode("content").getNode("documents");
 
@@ -254,7 +259,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             }
             if (!folderRoot.hasNode(folderName)) {
                 folderRoot = folderRoot.addNode(folderName, "hippostd:folder");
-                folderRoot.setProperty("hippostd:foldertype", new String[] {"new-translated-folder", "new-document"});
+                folderRoot.setProperty("hippostd:foldertype", new String[]{"new-translated-folder", "new-document"});
                 folderRoot.addMixin("mix:referenceable");
                 log.info(String.format("Added content structure %s", folderRoot.getPath()));
             } else {
@@ -275,6 +280,11 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         for (Route.Parameter param : route.getParameters()) {
             contentPath = contentPath.replace(param.name+":"+param.type, "${"+index+"}");
             index++;
+        }
+
+        log.info(String.format("%s build sitemap item %s", (dryRun? "DRYRUN" : ""), route.getUrl()));
+        if (dryRun) {
+            return;
         }
 
         if ("/".equals(StringUtils.trim(route.getUrl()))) {

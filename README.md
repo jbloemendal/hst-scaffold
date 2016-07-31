@@ -45,8 +45,8 @@ java -jar sfd.jar [options] [args]
 Options
 -b     --build              Build configuration from scaffold.
 -c     --configuration      Custom configuration file.
--d     --dryrun             Dryrun
 -h     --help               Show help
+-d     --dryrun             Dryrun
 -n     --diagnose           Find outdated components/sitemapitems/templates
 -r     --rollback           Rollback Build / Update / Scaffold.
 -s     --scaffold           Build scaffold from existing project configuration (reverse).
