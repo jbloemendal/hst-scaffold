@@ -43,12 +43,12 @@ cd myhippoproject
 java -jar sfd.jar [options] [args]
 
 Options
--h     --help               Show help
 -b     --build              Build configuration from scaffold.
--u     --updateForce        Update and overwrite configuration from scaffold (interactive).
--w     --dryrun             Dryrun
 -c     --configuration      Custom configuration file.
--s     --scaffold           Build scaffold from existing project configuration (reverse).
+-d     --dryrun             Dryrun
+-h     --help               Show help
+-n     --diagnose           Find outdated components/sitemapitems/templates
 -r     --rollback           Rollback Build / Update / Scaffold.
--d     --diagnose           Find outdated components/sitemapitems/templates
+-s     --scaffold           Build scaffold from existing project configuration (reverse).
+-u     --updateForce        Update and overwrite configuration from scaffold (interactive).
 ```

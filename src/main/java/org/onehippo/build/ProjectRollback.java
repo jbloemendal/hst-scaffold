@@ -65,7 +65,17 @@ public class ProjectRollback implements Rollback {
     }
 
     public void rollback(boolean dryRun) throws IOException, RepositoryException {
-        log.info("Move current project conf into trash.");
+        // find latest backup folder
+        File backups = new File(scaffoldDir, "history");
+
+        File[] files = backups.listFiles();
+        Arrays.sort(files);
+        if (files.length == 0) {
+            log.info("No backups available.");
+            return;
+        }
+
+        log.info(String.format("%s Move current project conf into trash.", (dryRun? "DRYRUN " : "")));
         File trash = new File(scaffoldDir, "trash/"+System.currentTimeMillis());
         if (!trash.exists()) {
             trash.mkdirs();
@@ -77,7 +87,7 @@ public class ProjectRollback implements Rollback {
         File componentDirectory = new File(projectDir, javaFilePath);
         File templateDirectory = new File(projectDir, ftlFilePath);
 
-        log.info(String.format("Move java components %s and templates %s into %s", componentDirectory.getPath(), templateDirectory.getPath(), trash.getPath()));
+        log.info(String.format("%s Move java components %s and templates %s into %s", (dryRun? "DRYRUN " : ""), componentDirectory.getPath(), templateDirectory.getPath(), trash.getPath()));
         if (!dryRun) {
             FileUtils.moveDirectory(componentDirectory, new File(trash, "java"));
             FileUtils.moveDirectory(templateDirectory, new File(trash, "ftl"));
@@ -87,7 +97,7 @@ public class ProjectRollback implements Rollback {
         String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
         File hstConfFile = new File(trash, projectName+"_hst.xml");
-        log.info(String.format("Export hst \"%s\" config %s", projectName, hstConfFile.getPath()));
+        log.info(String.format("%s Export hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
         if (!dryRun) {
             OutputStream out = new BufferedOutputStream(new FileOutputStream(hstConfFile));
             projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
@@ -95,11 +105,7 @@ public class ProjectRollback implements Rollback {
 
         log.info("Restore backup");
 
-        // find latest backup folder
-        File backups = new File(scaffoldDir, "history");
 
-        File[] files = backups.listFiles();
-        Arrays.sort(files);
 
         File latest = files[files.length-1];
 
@@ -107,8 +113,8 @@ public class ProjectRollback implements Rollback {
         File latestJavaFilesBackup = new File(latest, "java");
         File latestTemplateFilesBackup = new File(latest, "ftl");
 
-        log.info(String.format("Copy backup: java components %s into %s", latestJavaFilesBackup.getPath(),  componentDirectory.getPath()));
-        log.info(String.format("Copy backup: templates %s into %s", latestTemplateFilesBackup.getPath(), templateDirectory.getPath()));
+        log.info(String.format("%s Copy backup: java components %s into %s", (dryRun? "DRYRUN " : ""), latestJavaFilesBackup.getPath(),  componentDirectory.getPath()));
+        log.info(String.format("%s Copy backup: templates %s into %s", (dryRun? "DRYRUN " : ""), latestTemplateFilesBackup.getPath(), templateDirectory.getPath()));
         if (!dryRun) {
             FileUtils.copyDirectory(latestJavaFilesBackup, componentDirectory);
             FileUtils.copyDirectory(latestTemplateFilesBackup, templateDirectory);
@@ -116,7 +122,7 @@ public class ProjectRollback implements Rollback {
 
         // restore hst config
         hstConfFile = new File(latest, projectName+"_hst.xml");
-        log.info(String.format("Import hst \"%s\" config %s", projectName, hstConfFile.getPath()));
+        log.info(String.format("%s Import hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
         if (!dryRun) {
             projectHstConfRoot.getSession().removeItem(projectHstConfRoot.getPath());
 
@@ -126,7 +132,7 @@ public class ProjectRollback implements Rollback {
         }
 
         // remove backup folder
-        log.info(String.format("Delete backup %s", latest));
+        log.info(String.format("%s Delete backup %s", (dryRun? "DRYRUN " : ""), latest));
         if (!dryRun) {
             FileUtils.deleteDirectory(latest);
         }
