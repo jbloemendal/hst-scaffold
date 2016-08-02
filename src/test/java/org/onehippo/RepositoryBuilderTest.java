@@ -40,17 +40,6 @@ public class RepositoryBuilderTest extends TestCase {
     }
 
     private boolean isHstTemplateConfValid(Node templates, Route.Component component) throws RepositoryException {
-        /*
-        <sv:node sv:name="base-top-menu">
-        <sv:property sv:name="jcr:primaryType" sv:type="Name">
-        <sv:value>hst:template</sv:value>
-        </sv:property>
-        <sv:property sv:name="hst:renderpath" sv:type="String">
-        <sv:value>webfile:/freemarker/gogreen/base-top-menu.ftl</sv:value>
-        </sv:property>
-        </sv:node>
-        */
-
         if (!templates.hasNode(component.getTemplateName())) {
             return false;
         }

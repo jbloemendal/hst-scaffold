@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.build.ScaffoldBuilder;
+import org.onehippo.fold.FileFolder;
 
 import java.io.*;
 import java.util.*;
@@ -37,6 +38,7 @@ public class HSTScaffold {
 
     private static HSTScaffold scaffold;
     private ScaffoldBuilder builder;
+    private FileFolder folder;
 
     private List<Route> routes = new ArrayList<Route>();
 
@@ -183,6 +185,9 @@ public class HSTScaffold {
         this.builder = builder;
     }
 
+    public void setScafFolder(FileFolder folder) {
+        this.folder = folder;
+    }
 
     public void build(boolean dryRun) {
         if (this.builder != null) {
@@ -201,6 +206,16 @@ public class HSTScaffold {
                 this.builder.rollback(dryRun);
             } catch (Exception e) {
                 log.error("Error rolling back to previous project state.");
+            }
+        }
+    }
+
+    public void scaffold(File destination, boolean dryRun) {
+        if (this.folder != null) {
+            try {
+                this.folder.fold(destination, dryRun);
+            } catch (Exception e) {
+                log.error("Error folding project configuration.", e);
             }
         }
     }

@@ -29,6 +29,7 @@ public class Route {
         private List<Component> components;
         private boolean reference = false;
         private boolean pointer = false;
+        private boolean inconsistent;
 
         public Component(String name) {
             this.name = name;
@@ -83,6 +84,15 @@ public class Route {
             return this.components;
         }
 
+        public Component getComponent(String name) {
+            for (Component component : this.components) {
+                if (component.getName().equals(name)) {
+                    return component;
+                }
+            }
+            return null;
+        }
+
         public String getComponentPath() {
             StringBuilder componentPath = new StringBuilder();
             Component cursor = this;
@@ -118,6 +128,14 @@ public class Route {
 
         public Component getParent() {
             return parent;
+        }
+
+        public void setInconsistent(boolean inconsistent) {
+            this.inconsistent = inconsistent;
+        }
+
+        public boolean isInconsistent() {
+            return this.inconsistent;
         }
 
         public List<Component> getParents() {
@@ -220,6 +238,10 @@ public class Route {
         }
 
         page = ComponentParser.parse(pageConstruct);
+    }
+
+    public void setPage(Component page) {
+        this.page = page;
     }
 
     public Component getPage() {

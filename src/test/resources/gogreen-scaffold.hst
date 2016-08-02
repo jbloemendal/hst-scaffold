@@ -1,0 +1,17 @@
+#URL                            CONTENTPATH                      COMPONENTS
+/                                                                homepage(!main(&container(!carousel, !featured-products)))
+*                                                                &pagenotfound(main(&container))
+pagenotfound                                                     *pagenotfound
+/news                                                            newslist(main(&left(!newslist), !right))
+/news/*path                     /newsfacets/path:String          &newslist
+/news/*path.html                /newsfacets/path:String          newspage(main, &left(!content))
+/search                                                          search(!menu, &top, !main, !footer)
+/content                        /content                         contentlist(!menu, &top, main(&!contentlist), !footer)
+/about                          /content/about                   contentpage(main(left(&!content), !right))
+/products                       /products                        productslist(main(!left))
+/products/*path                 /products/path:String            productpage(main(!left))
+
+# Component Notation Legend
+# ! - inconsistent, either java class or template name varies
+# & - reference component
+# * - pointer, referencing component
