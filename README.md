@@ -22,12 +22,12 @@ Example Scaffold (myhippoproject/scaffold.hst):
 
 #URL                   CONTENTPATH                          COMPONENTS
 /                       /home                                home(header,&main(banner, doc),footer) # home page
-/contact                /contact                             text(header,*main,footer)              # text page
+/contact                /contact                             &text(header,*main,footer)             # text page
 /simple                 /simple                              simple                                 # simple page
 /news/:date/:id         /news/date:String/id:String          news(header,*main,footer)              # news page
 /news                   /news                                newsoverview(header,list, footer)      # news overview page
-/text/*path             /text/path:String                    text(header,*main,footer)
-/text/content/*path     /text/content/path:String            content(header,*main,footer)
+/text/*path             /text/path:String                    *text                                  # text page
+/text/content/*path     /text/content/path:String            *text                                  # text page
 ```
 
 Conventions:
