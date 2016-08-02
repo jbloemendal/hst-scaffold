@@ -137,16 +137,16 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     private void buildPageNode(Route route, Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
         log.info(String.format("%s Build Page Node %s component %s", dryRun? "DRYRUN " : "", root != null? root.getPath() : "", component.getName()));
 
-        if (component.isReference()) {
+        if (component.isReference() && component.getParent() != null) { // common workspace references
             buildWorkspaceComponent(component, dryRun);
             // todo referencePath
             String referencePath = component.getPage().getName()+"/"+component.getName();
             addPageComponentReference(root, component.getName(), referencePath, dryRun);
             references.put(component.getName(), referencePath);
-        } else if (component.isPointer()) {
+        } else if (component.isPointer()) { // pointer
             String referencePath = references.get(component.getName());
             addPageComponentReference(root, component.getName(), referencePath, dryRun);
-        } else {
+        } else { // page component
             Node newComponentNode = addPageComponentNode(root, component, dryRun);
 
             for (Route.Component childComponent : component.getComponents()) {

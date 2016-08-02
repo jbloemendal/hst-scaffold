@@ -217,11 +217,43 @@ public class RepositoryBuilderTest extends TestCase {
             }
 
         } catch (Exception e) {
-            log.error("Error testing components, XPath expression", e);
+            log.error("Error testing components.", e);
         } finally {
             if (scaffold != null) {
                 scaffold.rollback(false);
             }
+        }
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
+    }
+
+
+    public void testPageInheritance() throws IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+
+        List<Route> routes = scaffold.getRoutes();
+
+        // reference
+        assertTrue(routes.get(1).getPage().getName().equals("text"));
+        assertTrue(routes.get(1).getPage().getComponents().get(1).getName().equals("main"));
+        assertTrue(routes.get(1).getPage().getComponents().get(1).isPointer());
+        assertTrue(routes.get(1).getPage().isReference());
+
+        // pointer
+        assertTrue(routes.get(5).getPage().getName().equals("text"));
+        assertTrue(routes.get(5).getPage().isPointer());
+
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        try {
+            Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
+            scaffold.setBuilder(new RepositoryBuilder(hst));
+            scaffold.build(false);
+        } catch (Exception e) {
+            log.error("Error testing components", e);
+        } finally {
+            scaffold.rollback(false);
         }
 
         final Map<String, String> after = TestUtils.dirHash(projectDir);
