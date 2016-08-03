@@ -30,6 +30,7 @@ public class Route {
         private boolean reference = false;
         private boolean pointer = false;
         private boolean inconsistent;
+        private boolean inherited = false;
 
         public Component(String name) {
             this.name = name;
@@ -201,6 +202,70 @@ public class Route {
             return this.components.isEmpty();
         }
 
+        public String toString() {
+            StringBuilder expr = new StringBuilder();
+            if (pointer) {
+                expr.append("*");
+            } else if (reference) {
+                expr.append("&");
+            }
+
+            if (inconsistent) {
+                expr.append("!");
+            }
+
+            expr.append(name);
+            if (!isLeaf()) {
+                expr.append("(");
+
+                StringBuilder subExpr = new StringBuilder();
+                for (Component child : components) {
+                    if (subExpr.length() != 0) {
+                        subExpr.append(", ");
+                    }
+                    subExpr.append(child.toString());
+                }
+
+                expr.append(subExpr.toString());
+                expr.append(")");
+            }
+
+            return expr.toString();
+        }
+
+        public boolean isInherited() {
+            return inherited;
+        }
+
+        public void setInherited(boolean inherited) {
+            this.inherited = inherited;
+        }
+
+        public boolean has(String componentName) {
+            for (Component component : components) {
+                if (component.getName().equals(componentName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void remove(String componentName) {
+            int index = 0;
+            boolean found = false;
+
+            for (Component component : components) {
+                if (component.getName().equals(componentName)) {
+                    found = true;
+                    break;
+                }
+                index++;
+            }
+
+            if (found) {
+                components.remove(index);
+            }
+        }
     }
 
     public class Parameter {
@@ -217,6 +282,14 @@ public class Route {
         build();
     }
 
+    public Route(String urlMatcher, String contentPath, Component page) {
+        log.debug("new route "+urlMatcher+", "+contentPath+", "+page);
+        this.urlMatcher = urlMatcher.trim();
+        this.contentPath = contentPath.trim();
+
+        this.page = page;
+        this.pageConstruct = page.toString();
+    }
 
     private void build() {
         log.info("build route "+urlMatcher);
@@ -264,5 +337,17 @@ public class Route {
 
     public String getPageConstruct() {
         return pageConstruct;
+    }
+
+    public String toString() {
+        StringBuilder route = new StringBuilder();
+
+        route.append(this.urlMatcher);
+        route.append("\t\t");
+        route.append(this.contentPath);
+        route.append("\t\t");
+        route.append(this.page.toString());
+
+        return route.toString();
     }
 }

@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface Folder {
 
-    List<Route> getFold() throws RepositoryException;
+    List<Route> fold() throws RepositoryException;
 
     Route foldRoute(Node sitemapItem) throws RepositoryException;
 

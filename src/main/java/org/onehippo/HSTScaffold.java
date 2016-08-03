@@ -210,14 +210,15 @@ public class HSTScaffold {
         }
     }
 
-    public void scaffold(File destination, boolean dryRun) {
+    public List<Route> scaffold(File destination, boolean dryRun) {
         if (this.folder != null) {
             try {
-                this.folder.fold(destination, dryRun);
+                return this.folder.fold(destination, dryRun);
             } catch (Exception e) {
                 log.error("Error folding project configuration.", e);
             }
         }
+        return null;
     }
 
     public static HSTScaffold instance(String path) throws IOException {

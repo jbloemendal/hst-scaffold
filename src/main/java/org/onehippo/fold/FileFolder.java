@@ -4,12 +4,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.HSTScaffold;
 import org.onehippo.Route;
-import org.onehippo.build.RepositoryBuilder;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// EXPERIMENTAL!
 public class FileFolder implements Folder {
 
     final static Logger log = Logger.getLogger(FileFolder.class);
@@ -54,7 +56,7 @@ public class FileFolder implements Folder {
                 log.warn(String.format("Component %s is inconsistent JavaClass %s misses", component.getName(), className));
                 return true;
             }
-            String classPath = className.replaceAll(".", "/");
+            String classPath = className.replace(".", "/");
             String filePath = HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath;
             File javaFile = new File(filePath);
             if (!javaFile.exists()) {
@@ -92,14 +94,14 @@ public class FileFolder implements Folder {
     }
 
     private void include(Node componentNode, Route.Component component) throws RepositoryException {
+        // TODO lookup pages from common, workspace, etc ...
+
         String reference = componentNode.getProperty("hst:referencecomponent").getString();
+
         if (references.containsKey(reference)) {
-            component.setPointer(true);
             Route.Component referenced = references.get(reference);
             component.add(referenced.getComponents());
         } else {
-            component.setReference(true);
-
             Node referenceBase;
             if (componentNode.isNodeType("hst:containercomponentreference")) {
                 referenceBase = getNode(hstProjectRoot, "hst:workspace/hst:containers");
@@ -113,7 +115,16 @@ public class FileFolder implements Folder {
             }
 
             Route.Component referencedComponent = fold(referenced);
-            component.add(referencedComponent.getComponents());
+            List<Route.Component> components = referencedComponent.getComponents();
+            if (reference.startsWith("hst:abstractpages") || reference.startsWith("hst:pages")) {
+                for (Route.Component include : components) {
+                    include.setInherited(true);
+                }
+            } else {
+                component.setReference(true);
+            }
+
+            component.add(components);
 
             references.put(reference, component);
         }
@@ -122,6 +133,8 @@ public class FileFolder implements Folder {
     private void addChilds(Node componentNode, Route.Component component) throws RepositoryException {
         NodeIterator iterator = componentNode.getNodes();
 
+        // todo order childs by template include order
+
         while (iterator.hasNext()) {
             Node child = iterator.nextNode();
             if (child == null) {
@@ -129,6 +142,11 @@ public class FileFolder implements Folder {
             }
             Route.Component childComponent = fold(child);
             if (childComponent != null) {
+                if (component.has(childComponent.getName())) {
+                    log.info(String.format("component %s overwrite child %s", component.toString(), childComponent.toString()));
+                    component.remove(childComponent.getName());
+                }
+
                 component.add(childComponent);
             }
         }
@@ -181,6 +199,8 @@ public class FileFolder implements Folder {
                     // TODO
                 }
             }
+        } else {
+            contentPath = "/";
         }
         return contentPath;
     }
@@ -208,7 +228,8 @@ public class FileFolder implements Folder {
         return url;
     }
 
-    public List<Route> getFold() throws RepositoryException {
+    public List<Route> fold() throws RepositoryException {
+        // todo add sitemap items from workspace etc...
         List<Route> routes = new LinkedList<Route>();
         Node sitemap = hstProjectRoot.getNode("hst:sitemap");
         NodeIterator iterator = sitemap.getNodes();
@@ -222,8 +243,31 @@ public class FileFolder implements Folder {
         return routes;
     }
 
-    public void fold(File destination, boolean dryRun) {
-        // todo
+    public List<Route> fold(File destination, boolean dryRun) throws RepositoryException, IOException {
+        List<Route> routes = fold();
+
+        StringBuilder scaffold = new StringBuilder();
+        scaffold.append("#URL\t\tCONTENTPATH\t\tCOMPONENTS");
+        scaffold.append("\n\n");
+
+        for (Route route : routes) {
+            scaffold.append(route.toString());
+            scaffold.append("\n");
+        }
+
+        if (dryRun) {
+            System.out.println(scaffold.toString());
+            return routes;
+        }
+
+        FileWriter writer = new FileWriter(destination);
+        try {
+            writer.write(scaffold.toString());
+        } finally {
+            writer.close();
+        }
+
+        return routes;
     }
 
 }

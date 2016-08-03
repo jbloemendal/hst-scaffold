@@ -40,7 +40,7 @@ public class ScaffoldTest extends TestCase {
 
     private void testHomeRoute(Route homeRoute) {
         assertTrue("/".equals(homeRoute.getUrl()));
-        assertTrue(StringUtils.isEmpty(homeRoute.getContentPath()));
+        assertTrue("/".equals(homeRoute.getContentPath()));
 
         Route.Component page = homeRoute.getPage();
         assertTrue(!page.isInconsistent());
@@ -93,26 +93,23 @@ public class ScaffoldTest extends TestCase {
         Route.Component footer = page.getComponent("footer");
         assertTrue(footer.isInconsistent());
     }
-//
-//    public void testScaffold() throws RepositoryException, IOException {
-//        HSTScaffold.instance("./myhippoproject");
-//
-//        Node hst = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst");
-//        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-//
-//        FileFolder scafFolder = new FileFolder(hst);
-//        scaffold.setScafFolder(scafFolder);
-//
-//        scaffold.scaffold(new File(projectDir, "foldtest.hst"), false);
-//
-//        List<Route> routes = scafFolder.getFold();
-//
-//        testHomeRoute(routes.get(0));
-//        testContentListRoute(routes.get(7));
-//    }
-//
-//    public void testRoutesWriter() {
-//        // todo
-//    }
+
+    public void testScaffold() throws RepositoryException, IOException {
+        HSTScaffold.instance("./myhippoproject");
+
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+
+        Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
+        FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
+        scaffold.setScafFolder(scafFolder);
+
+        List<Route> routes = scaffold.scaffold(new File(projectDir, "fold-test.hst"), false);
+
+        testHomeRoute(routes.get(0));
+        testContentListRoute(routes.get(5));
+    }
+
+    // todo add tests for sitemap items placed in workspace, commons...
+    // todo add tests for pages placed in workspace, commons...
 
 }
