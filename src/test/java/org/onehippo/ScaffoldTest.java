@@ -43,54 +43,56 @@ public class ScaffoldTest extends TestCase {
         assertTrue(StringUtils.isEmpty(homeRoute.getContentPath()));
 
         Route.Component page = homeRoute.getPage();
+        assertTrue(!page.isInconsistent());
+
         Route.Component main = page.getComponent("main");
 
-        // assertTrue(main.isInconsistent()); // todo
+        assertTrue(main.isInconsistent());
 
         Route.Component container = main.getComponent("container");
+        assertTrue(!container.isInconsistent());
         assertTrue(container.isReference());
 
         Route.Component carousel = container.getComponent("carousel");
         assertTrue(carousel != null);
-        // assertTrue(carousel.isInconsistent()); // todo
+        assertTrue(carousel.isInconsistent());
 
         Route.Component featuredProducts = container.getComponent("featured-products");
         assertTrue(featuredProducts != null);
-        // assertTrue(featuredProducts.isInconsistent()); // todo
+        assertTrue(featuredProducts.isInconsistent());
     }
 
-//    public void testContentlistRouteFold() throws RepositoryException, IOException {
-//        Node hst = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst");
-//
-//        FileFolder scafFolder = new FileFolder(hst);
-//        Route route = scafFolder.foldRoute(hst.getNode("gogreen").getNode("hst:sitemap").getNode("content"));
-//
-//        assertTrue("/content".equals(route.getUrl()));
-//        assertTrue(StringUtils.isEmpty(route.getContentPath()));
-//
-//        testContentListRoute(route);
-//    }
-//
-//    private void testContentListRoute(Route route) {
-//        Route.Component page = route.getPage();
-//        Route.Component menu = page.getComponents().get(0);
-//
-//        assertTrue(menu.isInconsistent());
-//
-//        Route.Component top = page.getComponents().get(1);
-//        assertTrue(!top.isInconsistent());
-//        assertTrue(top.isReference());
-//
-//        Route.Component main = page.getComponents().get(2);
-//        assertTrue(!main.isInconsistent());
-//
-//        Route.Component contentlist = main.getComponents().get(0);
-//        assertTrue(contentlist.isInconsistent());
-//        assertTrue(contentlist.isReference());
-//
-//        Route.Component footer = page.getComponents().get(3);
-//        assertTrue(footer.isInconsistent());
-//    }
+    public void testContentlistRouteFold() throws RepositoryException, IOException {
+        Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
+
+        FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
+        Route route = scafFolder.foldRoute(gogreenHstConfRoot.getNode("hst:sitemap").getNode("content"));
+
+        assertTrue("/content".equals(route.getUrl()));
+
+        testContentListRoute(route);
+    }
+
+    private void testContentListRoute(Route route) {
+        Route.Component page = route.getPage();
+        Route.Component menu = page.getComponent("menu");
+
+        assertTrue(menu.isInconsistent());
+
+        Route.Component top = page.getComponent("top");
+        assertTrue(!top.isInconsistent());
+        assertTrue(top.isReference());
+
+        Route.Component main = page.getComponent("main");
+        assertTrue(main.isReference());
+        assertTrue(!main.isInconsistent());
+
+        Route.Component contentlist = main.getComponent("contentlist");
+        assertTrue(contentlist.isInconsistent());
+
+        Route.Component footer = page.getComponent("footer");
+        assertTrue(footer.isInconsistent());
+    }
 //
 //    public void testScaffold() throws RepositoryException, IOException {
 //        HSTScaffold.instance("./myhippoproject");

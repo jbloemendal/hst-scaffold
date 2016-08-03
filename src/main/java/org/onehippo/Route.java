@@ -77,7 +77,9 @@ public class Route {
         }
 
         public void add(List<Component> components) {
-            this.components.addAll(components);
+            for (Component component : components) {
+                add(component);
+            }
         }
 
         public List<Component> getComponents() {

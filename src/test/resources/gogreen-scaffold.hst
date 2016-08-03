@@ -6,7 +6,7 @@ pagenotfound                                                     *pagenotfound
 /news/*path                     /newsfacets/path:String          &newslist
 /news/*path.html                /newsfacets/path:String          newspage(main, &left(!content))
 /search                                                          search(!menu, &top, !main, !footer)
-/content                        /content                         contentlist(!menu, &top, main(&!contentlist), !footer)
+/content                        /content                         contentlist(!menu, &top, &main(!contentlist), !footer)
 /about                          /content/about                   contentpage(main(left(&!content), !right))
 /products                       /products                        productslist(main(!left))
 /products/*path                 /products/path:String            productpage(main(!left))
