@@ -143,24 +143,24 @@ public class ReverseScaffoldTest extends TestCase {
         assertTrue(footer.isInconsistent());
     }
 
-    public void testInconsistenciesBuild() throws IOException, RepositoryException {
-        Node buildHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-build.xml").getNode("hst:hst").getNode("hst:configurations").getNode("myhippoproject");
-
-        FileFolder scafFolder = new FileFolder(buildHstConfRoot);
-        Node sitemapItem = buildHstConfRoot.getNode("hst:sitemap").getNode("root");
-
-        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
-        Node pageNode = scafFolder.getRelativeNode(buildHstConfRoot, relativeComponentPath);
-
-        Route.Component homePage = scafFolder.fold(pageNode);
-        assertTrue(!homePage.isInconsistent());
-
-        Route.Component header = homePage.getComponent("header");
-        assertTrue(!header.isInconsistent());
-
-        Route.Component footer = homePage.getComponent("footer");
-        assertTrue(!footer.isInconsistent());
-    }
+//    public void testInconsistenciesBuild() throws IOException, RepositoryException {
+//        Node buildHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-build.xml").getNode("hst:hst").getNode("hst:configurations").getNode("myhippoproject");
+//
+//        FileFolder scafFolder = new FileFolder(buildHstConfRoot);
+//        Node sitemapItem = buildHstConfRoot.getNode("hst:sitemap").getNode("root");
+//
+//        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
+//        Node pageNode = scafFolder.getRelativeNode(buildHstConfRoot, relativeComponentPath);
+//
+//        Route.Component homePage = scafFolder.fold(pageNode);
+//        assertTrue(!homePage.isInconsistent());
+//
+//        Route.Component header = homePage.getComponent("header");
+//        assertTrue(!header.isInconsistent());
+//
+//        Route.Component footer = homePage.getComponent("footer");
+//        assertTrue(!footer.isInconsistent());
+//    }
 
     // todo add pointer test (main)
 

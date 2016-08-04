@@ -85,6 +85,10 @@ public class FileFolder implements Folder {
             return true;
         }
 
+//        if (component.isInherited()) {
+//            return false;
+//        }
+
         // todo improve
         Node templateNode = templates.getNode(templateName);
         if (templateNode.hasProperty("hst:renderpath")) {
