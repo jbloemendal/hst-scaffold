@@ -43,36 +43,37 @@ public class HSTScaffoldCLITest extends TestCase {
         assertTrue(five % even == 0);
     }
 
-    public void testDryRun() throws IOException {
-        final Map<String, String> before = TestUtils.dirHash(projectDir);
+//    public void testDryRun() throws IOException {
+//        final Map<String, String> before = TestUtils.dirHash(projectDir);
+//
+//        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+//
+//        scaffold.build(true);
+//
+//        final Map<String, String> after = TestUtils.dirHash(projectDir);
+//        assertFalse(TestUtils.dirChanged(before, after));
+//    }
 
-        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-
-        scaffold.build(true);
-
-        final Map<String, String> after = TestUtils.dirHash(projectDir);
-        assertFalse(TestUtils.dirChanged(before, after));
-    }
-
-    public void testRollback() throws IOException {
-        final Map<String, String> before = TestUtils.dirHash(projectDir);
-
-        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-
-        File history = new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history");
-
-        scaffold.build(false);
-
-        log.debug("Scaffold history exists? "+history.getPath());
-        assertTrue(history.exists());
-
-        scaffold.rollback(false);
-
-        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME+"/trash").exists());
-
-        final Map<String, String> after = TestUtils.dirHash(projectDir);
-        assertFalse(TestUtils.dirChanged(before, after));
-    }
+//
+//    public void testRollback() throws IOException {
+//        final Map<String, String> before = TestUtils.dirHash(projectDir);
+//
+//        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+//
+//        File history = new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME +"/history");
+//
+//        scaffold.build(false);
+//
+//        log.debug("Scaffold history exists? "+history.getPath());
+//        assertTrue(history.exists());
+//
+//        scaffold.rollback(false);
+//
+//        assertTrue(new File(projectDir, HSTScaffold.SCAFFOLD_DIR_NAME+"/trash").exists());
+//
+//        final Map<String, String> after = TestUtils.dirHash(projectDir);
+//        assertFalse(TestUtils.dirChanged(before, after));
+//    }
 
 //    @Test
 //    @Ignore("requires running repository for xml exports")
