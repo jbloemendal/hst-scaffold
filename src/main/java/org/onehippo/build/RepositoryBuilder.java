@@ -131,10 +131,10 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         log.debug(String.format("%s Build page %s", (dryRun? "DRYRUN " : ""), route.getPageConstruct()));
 
         Node pages = projectHstConfRoot.getNode("hst:pages");
-        buildPageNode(route, pages, route.getPage(), dryRun);
+        buildPageNode(pages, route.getPage(), dryRun);
     }
 
-    private void buildPageNode(Route route, Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
+    private void buildPageNode(Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {
         log.info(String.format("%s Build Page Node %s component %s", dryRun? "DRYRUN " : "", root != null? root.getPath() : "", component.getName()));
 
         if (component.isReference() && component.getParent() != null) { // common workspace references
@@ -150,7 +150,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             Node newComponentNode = addPageComponentNode(root, component, dryRun);
 
             for (Route.Component childComponent : component.getComponents()) {
-                buildPageNode(route, newComponentNode, childComponent, dryRun);
+                buildPageNode(newComponentNode, childComponent, dryRun);
             }
         }
     }
@@ -162,7 +162,6 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
 
         Node componentReference;
-
         if (root.hasNode(name)) {
             componentReference = root.getNode(name);
         } else {
@@ -247,7 +246,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         Node documents = projectHstConfRoot.getSession().getRootNode().getNode("content").getNode("documents");
 
         if (!documents.hasNode(projectName)) {
-            throw new RepositoryException(String.format("Project node is missing.", documents.getPath()+"/"+projectName));
+            throw new RepositoryException(String.format("Project node is missing %s.", documents.getPath()+"/"+projectName));
         }
 
         Matcher matcher = PATH_SEGMENT.matcher(route.getContentPath().substring(1));

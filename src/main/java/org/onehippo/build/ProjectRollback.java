@@ -105,8 +105,6 @@ public class ProjectRollback implements Rollback {
 
         log.info("Restore backup");
 
-
-
         File latest = files[files.length-1];
 
         // copy java and templates from backup folder

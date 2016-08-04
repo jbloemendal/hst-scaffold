@@ -13,6 +13,7 @@ import org.hippoecm.repository.HippoRepositoryFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.onehippo.build.RepositoryBuilder;
+import org.onehippo.forge.utilities.commons.jcrmockup.JcrMockUp;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -31,9 +32,13 @@ public class HSTScaffoldCLITest extends TestCase {
      *
      * @param testName name of the test case
      */
-    public HSTScaffoldCLITest(String testName) throws IOException {
+    public HSTScaffoldCLITest(String testName) throws IOException, RepositoryException {
         super(testName);
-        HSTScaffold.instance("./myhippoproject");
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+
+        Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
+        scaffold.setBuilder(new RepositoryBuilder(hst));
+
         projectDir = new File("./myhippoproject");
     }
 
@@ -43,10 +48,14 @@ public class HSTScaffoldCLITest extends TestCase {
         assertTrue(five % even == 0);
     }
 
-    public void testDryRun() throws IOException {
+    public void testDryRun() throws IOException, RepositoryException {
         final Map<String, String> before = TestUtils.dirHash(projectDir);
 
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+
+
+        Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
+        scaffold.setBuilder(new RepositoryBuilder(hst));
 
         scaffold.build(true);
 
