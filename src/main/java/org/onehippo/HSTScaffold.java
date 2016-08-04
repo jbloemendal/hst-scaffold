@@ -44,7 +44,10 @@ public class HSTScaffold {
 
     public static Properties properties;
 
+    private File projectDir;
+
     HSTScaffold(String projectDirPath) throws IOException {
+        this.projectDir = new File(projectDirPath);
         File scaffoldDir = createHiddenScaffold(projectDirPath);
 
         copyDefaultFiles(scaffoldDir);
@@ -230,4 +233,7 @@ public class HSTScaffold {
         return scaffold;
     }
 
+    public File getProjectDir() {
+        return projectDir;
+    }
 }

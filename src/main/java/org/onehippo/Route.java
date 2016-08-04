@@ -4,6 +4,7 @@ package org.onehippo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import javax.jcr.Node;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,9 +32,16 @@ public class Route {
         private boolean pointer = false;
         private boolean inconsistent;
         private boolean inherited = false;
+        private Node node;
 
         public Component(String name) {
             this.name = name;
+            this.components = new ArrayList<Component>();
+        }
+
+        public Component(String name, Node node) {
+            this.name = name;
+            this.node = node;
             this.components = new ArrayList<Component>();
         }
 
@@ -265,6 +273,10 @@ public class Route {
             if (found) {
                 components.remove(index);
             }
+        }
+
+        public Node getNode() {
+            return node;
         }
     }
 

@@ -72,17 +72,17 @@ public class ReverseScaffoldTest extends TestCase {
         Node pageNode = scafFolder.getRelativeNode(gogreenHstConfRoot, relativeComponentPath);
         Route.Component page = scafFolder.fold(pageNode);
 
-        testContentListPage(page);
+        testContentListPage(page, true);
     }
 
-    private void testContentListPage(Route.Component page) {
+    private void testContentListPage(Route.Component page, boolean pageBuild) {
         Route.Component menu = page.getComponent("menu");
 
         assertTrue(menu.isInconsistent());
 
         Route.Component top = page.getComponent("top");
         assertTrue(!top.isInconsistent());
-        assertTrue(top.isReference());
+        assertEquals(top.isPointer(), !pageBuild);
 
         Route.Component main = page.getComponent("main");
         assertTrue(main.isReference());
@@ -105,7 +105,7 @@ public class ReverseScaffoldTest extends TestCase {
         Map<String, Route> routes = scaffold.scaffold(new File(projectDir, "fold-test.hst"), false);
 
         testHomePage(routes.get("/").getPage());
-        testContentListPage(routes.get("/content").getPage());
+        testContentListPage(routes.get("/content").getPage(), false);
     }
 
     public void testContentPlaceHolders() throws RepositoryException, IOException {
@@ -121,6 +121,45 @@ public class ReverseScaffoldTest extends TestCase {
 
         Route newsDetail = routes.get("/news/:param1");
         assertEquals(newsDetail.getContentPath(), "/newsfacets/param1:String");
+    }
+
+
+    public void testInconsistencies() throws IOException, RepositoryException {
+        Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
+
+        FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
+        Node sitemapItem = gogreenHstConfRoot.getNode("hst:sitemap").getNode("root");
+
+        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
+        Node pageNode = scafFolder.getRelativeNode(gogreenHstConfRoot, relativeComponentPath);
+
+        Route.Component homePage = scafFolder.fold(pageNode);
+        assertTrue(!homePage.isInconsistent());
+
+        Route.Component menu = homePage.getComponent("menu");
+        assertTrue(menu.isInconsistent());
+
+        Route.Component footer = homePage.getComponent("footer");
+        assertTrue(footer.isInconsistent());
+    }
+
+    public void testInconsistenciesBuild() throws IOException, RepositoryException {
+        Node buildHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-build.xml").getNode("hst:hst").getNode("hst:configurations").getNode("myhippoproject");
+
+        FileFolder scafFolder = new FileFolder(buildHstConfRoot);
+        Node sitemapItem = buildHstConfRoot.getNode("hst:sitemap").getNode("root");
+
+        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
+        Node pageNode = scafFolder.getRelativeNode(buildHstConfRoot, relativeComponentPath);
+
+        Route.Component homePage = scafFolder.fold(pageNode);
+        assertTrue(!homePage.isInconsistent());
+
+        Route.Component header = homePage.getComponent("header");
+        assertTrue(!header.isInconsistent());
+
+        Route.Component footer = homePage.getComponent("footer");
+        assertTrue(!footer.isInconsistent());
     }
 
     // todo add pointer test (main)

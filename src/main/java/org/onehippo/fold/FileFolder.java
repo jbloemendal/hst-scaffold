@@ -32,10 +32,15 @@ public class FileFolder implements Folder {
     }
 
     public Route.Component fold(Node componentNode) throws RepositoryException {
-        Route.Component component = new Route.Component(componentNode.getName());
+        Route.Component component = foldToComponents(componentNode);
 
-        boolean inconsistent = isInconsistent(componentNode, component);
-        component.setInconsistent(inconsistent);
+        setInconsistent(component);
+
+        return component;
+    }
+
+    private Route.Component foldToComponents(Node componentNode) throws RepositoryException {
+        Route.Component component = new Route.Component(componentNode.getName(), componentNode);
 
         if (componentNode.hasProperty("hst:referencecomponent")) {
             include(componentNode, component);
@@ -46,7 +51,15 @@ public class FileFolder implements Folder {
         return component;
     }
 
-    private boolean isInconsistent(Node componentNode, Route.Component component) throws RepositoryException {
+    private void setInconsistent(Route.Component component) throws RepositoryException {
+        component.setInconsistent(isInconsistent(component));
+        for (Route.Component child : component.getComponents()) {
+            setInconsistent(child);
+        }
+    }
+
+    private boolean isInconsistent(Route.Component component) throws RepositoryException {
+        Node componentNode = component.getNode();
         if (componentNode.hasProperty("hst:componentclassname")) {
             if (isComponentClassInconsistent(componentNode, component)) {
                 return true;
@@ -72,19 +85,23 @@ public class FileFolder implements Folder {
             return true;
         }
 
+        // todo improve
         Node templateNode = templates.getNode(templateName);
         if (templateNode.hasProperty("hst:renderpath")) {
             String renderPath = templateNode.getProperty("hst:renderpath").getString();
             if (!component.getWebfilePath().equals(renderPath)) {
-                log.warn(String.format("Component %s is inconsistent %s != %s", component.getName(), renderPath, component.getWebfilePath()));
+                log.warn(String.format("Component %s is inconsistent %s != %s",
+                        component.getName(), renderPath, component.getWebfilePath()));
                 return true;
             }
         }
+
         File templateFile = new File(component.getTemplateFilePath());
         if (!templateFile.exists()) {
             log.warn(String.format("Component %s is inconsistent template file %s is missing.", component.getName(), templateFile.getPath()));
             return true;
         }
+
         return false;
     }
 
@@ -94,9 +111,12 @@ public class FileFolder implements Folder {
             log.warn(String.format("Component %s is inconsistent JavaClass %s misses", component.getName(), className));
             return true;
         }
+
+        String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
         String classPath = className.replace(".", "/");
-        String filePath = HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath+".java";
+        String filePath = projectDir+"/"+HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath+".java";
         File javaFile = new File(filePath);
+
         if (!javaFile.exists()) {
             log.warn(String.format("Component %s is inconsistent Java File %s misses", component.getName(), javaFile.getPath()));
             return true;
@@ -108,11 +128,14 @@ public class FileFolder implements Folder {
         String reference = componentNode.getProperty("hst:referencecomponent").getString();
 
         if (references.containsKey(reference)) {
-            Route.Component referenced = references.get(reference);
-            component.add(referenced.getComponents());
+//            Route.Component referenced = references.get(reference);
+//            component.add(referenced.getComponents());
+            component.setPointer(true);
         } else {
             addReferenced(componentNode, component);
-            references.put(reference, component);
+            if (componentNode.isNodeType("hst:containercomponentreference")) {
+                references.put(reference, component);
+            }
         }
     }
 
@@ -140,13 +163,20 @@ public class FileFolder implements Folder {
         List<Route.Component> components = referencedComponent.getComponents();
         if (reference.startsWith("hst:abstractpages") || reference.startsWith("hst:pages")) {
             for (Route.Component include : components) {
-                include.setInherited(true);
+                setInherited(include, true);
             }
         } else {
             component.setReference(true);
         }
 
-        component.add(components);
+        component.add(components); // todo this changes parent references !!!
+    }
+
+    private void setInherited(Route.Component component, boolean inherited) {
+        component.setInherited(true);
+        for (Route.Component child : component.getComponents()) {
+            setInherited(child, inherited);
+        }
     }
 
     private Node getReferenceBase(String reference) throws RepositoryException {
@@ -329,6 +359,7 @@ public class FileFolder implements Folder {
     }
 
     public Map<String, Route> fold(File destination, boolean dryRun) throws RepositoryException, IOException {
+        this.references.clear();
         Map<String, Route> routes = fold();
 
         StringBuilder scaffold = new StringBuilder();
