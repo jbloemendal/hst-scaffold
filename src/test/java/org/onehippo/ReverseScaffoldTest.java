@@ -123,7 +123,10 @@ public class ReverseScaffoldTest extends TestCase {
         assertEquals(newsDetail.getContentPath(), "/newsfacets/param1:String");
     }
 
+    // todo add pointer test (main)
+
     // todo add tests for sitemap items placed in workspace, commons...
+
     // todo add tests for pages placed in workspace, commons...
 
 }

@@ -69,7 +69,7 @@ public class Route {
         public String getPathJavaClass() {
             String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
             String javaComponentPath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
-            return projectDir+"/"+javaComponentPath+"/"+StringUtils.capitalize(name)+"Component.java";
+            return projectDir+"/"+javaComponentPath+"/org/example/"+StringUtils.capitalize(name)+"Component.java";
         }
 
         public void add(Component component) {

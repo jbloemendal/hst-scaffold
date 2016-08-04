@@ -1,12 +1,15 @@
 package org.onehippo;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.collections.functors.ExceptionPredicate;
 import org.apache.log4j.Logger;
 import org.hippoecm.repository.HippoRepository;
 import org.hippoecm.repository.HippoRepositoryFactory;
 import org.onehippo.build.RepositoryBuilder;
+import org.onehippo.fold.FileFolder;
 
 import javax.jcr.*;
+import java.io.File;
 import java.io.IOException;
 
 public class HSTScaffoldCLI {
@@ -32,6 +35,11 @@ public class HSTScaffoldCLI {
                 build(scaffold, dryRun);
             } else if (line.hasOption("r")) {
                 rollback(scaffold, dryRun);
+            } else if (line.hasOption("s")) {
+                if (args.length != 3) {
+                    throw new IllegalArgumentException("arguments missing [projectNodePath] [destinationFile]");
+                }
+                reverse(scaffold, args[1], args[2], dryRun);
             } else {
                 printHelp(options);
             }
@@ -58,6 +66,17 @@ public class HSTScaffoldCLI {
         }
     }
 
+    private static void reverse(HSTScaffold scaffold, String hstProjectNodePath, String destination, boolean dryRun) throws Exception {
+        Session session = getSession();
+        try {
+            Node hst = session.getNode(hstProjectNodePath);
+            scaffold.setScafFolder(new FileFolder(hst));
+            scaffold.scaffold(new File(destination), dryRun);
+        } catch (Exception e) {
+            session.refresh(false);
+            throw e;
+        }
+    }
 
     private static void rollback(HSTScaffold scaffold, boolean dryRun) throws Exception {
         Session session = getSession();
@@ -95,7 +114,7 @@ public class HSTScaffoldCLI {
         options.addOption("d", "dryrun", false, "dryrun, do nothing");
         // options.addOption("f", "file", true, "Custom configuration file.");
         // options.addOption("u", "update", false, "Update configuration from scaffold.");
-        // options.addOption("s", "scaffold", true, "Build scaffold from configuration (reverse)");
+        options.addOption("s", "scaffold", true, "Build scaffold from configuration (reverse)");
         options.addOption("r", "rollback", false, "Rollback configuration changes.");
         return options;
     }

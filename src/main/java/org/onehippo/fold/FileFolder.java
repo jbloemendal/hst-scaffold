@@ -95,7 +95,7 @@ public class FileFolder implements Folder {
             return true;
         }
         String classPath = className.replace(".", "/");
-        String filePath = HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath;
+        String filePath = HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath+".java";
         File javaFile = new File(filePath);
         if (!javaFile.exists()) {
             log.warn(String.format("Component %s is inconsistent Java File %s misses", component.getName(), javaFile.getPath()));
@@ -273,6 +273,9 @@ public class FileFolder implements Folder {
         // inherits
         Node cursor = hstProjectRoot;
         while (cursor.hasProperty("hst:inheritsfrom")) {
+            if (cursor.getProperty("hst:inheritsfrom").isMultiple()) {
+                break;
+            }
             String inheritsFrom = cursor.getProperty("hst:inheritsfrom").getString();
             cursor = getRelativeNode(cursor, inheritsFrom);
             if (cursor.hasNode("hst:sitemap")) {
