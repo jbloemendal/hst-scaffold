@@ -6,11 +6,12 @@ import org.onehippo.Route;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.util.List;
+import java.util.Map;
 
 public interface Folder {
 
-    List<Route> fold() throws RepositoryException;
+    Route.Component fold(Node componentNode) throws RepositoryException;
 
-    Route foldRoute(Node sitemapItem) throws RepositoryException;
+    Map<String, Route> fold() throws RepositoryException;
 
 }

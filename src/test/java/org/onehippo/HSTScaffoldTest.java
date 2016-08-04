@@ -99,4 +99,6 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue(routes.get(3).getPage().getComponents().get(1).isPointer());
     }
 
+    // todo test .html / .htm sitemap items
+
 }

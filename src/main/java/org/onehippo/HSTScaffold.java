@@ -116,6 +116,7 @@ public class HSTScaffold {
         return routes;
     }
 
+
     public void read(Reader configReader) {
         try {
             StringBuilder configBuilder = new StringBuilder();
@@ -210,7 +211,7 @@ public class HSTScaffold {
         }
     }
 
-    public List<Route> scaffold(File destination, boolean dryRun) {
+    public Map<String, Route> scaffold(File destination, boolean dryRun) {
         if (this.folder != null) {
             try {
                 return this.folder.fold(destination, dryRun);

@@ -1,7 +1,6 @@
 package org.onehippo;
 
 import junit.framework.TestCase;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.build.RepositoryBuilder;
 import org.onehippo.fold.FileFolder;
@@ -11,9 +10,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
-public class ScaffoldTest extends TestCase {
+public class ReverseScaffoldTest extends TestCase {
 
     final static Logger log = Logger.getLogger(RepositoryBuilder.class);
     private File projectDir;
@@ -23,7 +22,7 @@ public class ScaffoldTest extends TestCase {
      *
      * @param testName name of the test case
      */
-    public ScaffoldTest(String testName) throws IOException {
+    public ReverseScaffoldTest(String testName) throws IOException {
         super(testName);
 
         projectDir = new File("./myhippoproject");
@@ -33,16 +32,17 @@ public class ScaffoldTest extends TestCase {
         Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
 
         FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
-        Route homeRoute = scafFolder.foldRoute(gogreenHstConfRoot.getNode("hst:sitemap").getNode("root"));
 
-        testHomeRoute(homeRoute);
+        Node sitemapItem = gogreenHstConfRoot.getNode("hst:sitemap").getNode("root");
+        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
+
+        Node pageNode = scafFolder.getRelativeNode(gogreenHstConfRoot, relativeComponentPath);
+        Route.Component page = scafFolder.fold(pageNode);
+
+        testHomePage(page);
     }
 
-    private void testHomeRoute(Route homeRoute) {
-        assertTrue("/".equals(homeRoute.getUrl()));
-        assertTrue("/".equals(homeRoute.getContentPath()));
-
-        Route.Component page = homeRoute.getPage();
+    private void testHomePage(Route.Component page) {
         assertTrue(!page.isInconsistent());
 
         Route.Component main = page.getComponent("main");
@@ -66,15 +66,16 @@ public class ScaffoldTest extends TestCase {
         Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
 
         FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
-        Route route = scafFolder.foldRoute(gogreenHstConfRoot.getNode("hst:sitemap").getNode("content"));
+        Node sitemapItem = gogreenHstConfRoot.getNode("hst:sitemap").getNode("content");
+        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
 
-        assertTrue("/content".equals(route.getUrl()));
+        Node pageNode = scafFolder.getRelativeNode(gogreenHstConfRoot, relativeComponentPath);
+        Route.Component page = scafFolder.fold(pageNode);
 
-        testContentListRoute(route);
+        testContentListPage(page);
     }
 
-    private void testContentListRoute(Route route) {
-        Route.Component page = route.getPage();
+    private void testContentListPage(Route.Component page) {
         Route.Component menu = page.getComponent("menu");
 
         assertTrue(menu.isInconsistent());
@@ -95,18 +96,31 @@ public class ScaffoldTest extends TestCase {
     }
 
     public void testScaffold() throws RepositoryException, IOException {
-        HSTScaffold.instance("./myhippoproject");
-
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
 
         Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
         FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
         scaffold.setScafFolder(scafFolder);
 
-        List<Route> routes = scaffold.scaffold(new File(projectDir, "fold-test.hst"), false);
+        Map<String, Route> routes = scaffold.scaffold(new File(projectDir, "fold-test.hst"), false);
 
-        testHomeRoute(routes.get(0));
-        testContentListRoute(routes.get(5));
+        testHomePage(routes.get("/").getPage());
+        testContentListPage(routes.get("/content").getPage());
+    }
+
+    public void testContentPlaceHolders() throws RepositoryException, IOException {
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+        Node gogreenHstConfRoot = JcrMockUp.mockJcrNode("/cafebabe-gogreen.xml").getNode("hst:hst").getNode("hst:configurations").getNode("gogreen");
+        FileFolder scafFolder = new FileFolder(gogreenHstConfRoot);
+        scaffold.setScafFolder(scafFolder);
+
+        Map<String, Route> routes = scaffold.scaffold(new File(projectDir, "fold-test.hst"), false);
+
+        Route contentDetail = routes.get("/content/_any_.html");
+        assertEquals(contentDetail.getContentPath(), "/content/param1:String");
+
+        Route newsDetail = routes.get("/news/:param1");
+        assertEquals(newsDetail.getContentPath(), "/newsfacets/param1:String");
     }
 
     // todo add tests for sitemap items placed in workspace, commons...
