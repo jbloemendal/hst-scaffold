@@ -52,3 +52,7 @@ Options
 -s     --scaffold           Build scaffold from existing project configuration (reverse).
 -u     --updateForce        Update and overwrite configuration from scaffold (interactive).
 ```
+
+***
+
+http://jbloemen.blogspot.nl/2016/08/hippo-site-toolkit-scaffolding.html
