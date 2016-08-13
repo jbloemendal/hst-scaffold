@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/jbloemendal/hst-scaffold.svg?branch=master)](https://travis-ci.org/jbloemendal/hst-scaffold)
+[![Coverage Status](https://coveralls.io/repos/github/jbloemendal/hst-scaffold/badge.svg?branch=master)](https://coveralls.io/github/jbloemendal/hst-scaffold?branch=master)
 ![HST-Scaffold](https://raw.githubusercontent.com/jbloemendal/hst-scaffold/master/logo.png)
 HST-Scaffold
 ============
