@@ -330,11 +330,18 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
 
         Node menuItems = projectHstConfRoot.getNode("hst:sitemenus");
+        if (!menuItems.hasNode("main")) {
+            menuItems.addNode("main", "hst:sitemenu");
+        }
+
+        Node main = menuItems.getNode("main");
 
         String itemName = "";
+        String reference = "";
 
         if (route.getUrl().equals("/")) {
             itemName = "home";
+            reference = "root";
         } else {
             String[] names = route.getUrl().split("/");
             if (names.length == 0) {
@@ -344,13 +351,9 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             if (StringUtils.isEmpty(itemName)) {
                 return;
             }
+            reference = route.getUrl().substring(1);
         }
 
-        if (!menuItems.hasNode("main")) {
-            menuItems.addNode("main", "hst:sitemenu");
-        }
-
-        Node main = menuItems.getNode("main");
         if (main.hasNode(itemName)) {
             return;
         }
@@ -361,7 +364,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         }
 
         Node newMenuItem = main.addNode(itemName, "hst:sitemenuitem");
-        newMenuItem.setProperty("hst:referencesitemapitem", route.getUrl().substring(1));
+        newMenuItem.setProperty("hst:referencesitemapitem", reference);
     }
 
     private Node addNode(Node node, String nodeName, String type, boolean dryRun) throws RepositoryException {
