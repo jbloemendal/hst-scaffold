@@ -109,6 +109,7 @@ public class TemplateBuilder {
         try {
             mustache.execute(writer, new HashMap<String, Object>() {
                 {
+                    put("component", component);
                     put("childs", component.getComponents());
                     put("name", component.getName().toLowerCase());
 
