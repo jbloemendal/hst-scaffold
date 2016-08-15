@@ -250,4 +250,102 @@ public class RepositoryBuilderTest extends TestCase {
     }
 
 
+    public void testMainMenu() {
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        HSTScaffold scaffold = null;
+        try {
+            scaffold = HSTScaffold.instance("./myhippoproject");
+
+            Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
+
+            scaffold.setBuilder(new RepositoryBuilder(hst));
+            scaffold.build(false);
+
+            String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+
+            assertTrue(hst.getNode("hst:configurations").getNode(projectHstNodeName).hasNode("hst:sitemenus"));
+
+            Node menus = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemenus");
+
+            assertTrue(menus.hasNode("main"));
+
+            Node main = menus.getNode("main");
+
+            for (Route route : scaffold.getRoutes()) {
+                if (route.getParameters().size() > 0) {
+                    continue;
+                }
+
+                String[] names = route.getUrl().split("/");
+                if (names.length == 0) {
+                    continue;
+                }
+                String name = names[names.length - 1];
+                if (StringUtils.isEmpty(name)) {
+                    continue;
+                }
+
+                assertTrue(main.hasNode(name));
+                Node menuItem = main.getNode("main");
+
+                String sitemapPath = route.getUrl().substring(1);
+
+                String reference = menuItem.getProperty("hst:referencesitemapitem").getString();
+                if (StringUtils.isNotEmpty(reference)) {
+                    assertEquals(sitemapPath, reference);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error testing components.", e);
+        } finally {
+            if (scaffold != null) {
+                scaffold.rollback(false);
+            }
+        }
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
+    }
+
+    public void testSpecificMenuItems() {
+        final Map<String, String> before = TestUtils.dirHash(projectDir);
+
+        HSTScaffold scaffold = null;
+        try {
+            scaffold = HSTScaffold.instance("./myhippoproject");
+
+            Node hst = JcrMockUp.mockJcrNode("/cafebabe.xml").getNode("hst:hst");
+
+            scaffold.setBuilder(new RepositoryBuilder(hst));
+            scaffold.build(false);
+
+            String projectHstNodeName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+
+            assertTrue(hst.getNode("hst:configurations").getNode(projectHstNodeName).hasNode("hst:sitemenus"));
+
+            Node menus = hst.getNode("hst:configurations").getNode(projectHstNodeName).getNode("hst:sitemenus");
+
+            assertTrue(menus.hasNode("main"));
+
+            Node main = menus.getNode("main");
+
+            assertTrue(main.hasNode("home"));
+            assertTrue(main.hasNode("contact"));
+            assertTrue(main.hasNode("simple"));
+            assertTrue(main.hasNode("news"));
+
+        } catch (Exception e) {
+            log.error("Error testing components.", e);
+        } finally {
+            if (scaffold != null) {
+                scaffold.rollback(false);
+            }
+        }
+
+        final Map<String, String> after = TestUtils.dirHash(projectDir);
+        assertFalse(TestUtils.dirChanged(before, after));
+    }
+
 }

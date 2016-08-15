@@ -57,6 +57,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
                 buildPages(route, dryRun);
                 buildSitemapItem(route, dryRun);
                 buildContent(route, dryRun);
+                buildMenu(route, dryRun);
             } catch (IOException e) {
                 log.error("Error building route.", e);
             } catch (RepositoryException e) {
@@ -318,6 +319,49 @@ public class RepositoryBuilder implements ScaffoldBuilder {
             sitemapItem.setProperty("hst:relativecontentpath", contentPath.substring(1));
         }
 
+    }
+
+    private void buildMenu(Route route, boolean dryRun) throws RepositoryException {
+        if (!projectHstConfRoot.hasNode("hst:sitemenus")) {
+            throw new RepositoryException("HST configuration child hst:sitemenus misses.");
+        }
+        if (route.getParameters().size() > 0) {
+            return;
+        }
+
+        Node menuItems = projectHstConfRoot.getNode("hst:sitemenus");
+
+        String itemName = "";
+
+        if (route.getUrl().equals("/")) {
+            itemName = "home";
+        } else {
+            String[] names = route.getUrl().split("/");
+            if (names.length == 0) {
+                return;
+            }
+            itemName = names[names.length - 1];
+            if (StringUtils.isEmpty(itemName)) {
+                return;
+            }
+        }
+
+        if (!menuItems.hasNode("main")) {
+            menuItems.addNode("main", "hst:sitemenu");
+        }
+
+        Node main = menuItems.getNode("main");
+        if (main.hasNode(itemName)) {
+            return;
+        }
+
+        log.info(String.format("%s build menu item %s", (dryRun? "DRYRUN" : ""), itemName));
+        if (dryRun) {
+            return;
+        }
+
+        Node newMenuItem = main.addNode(itemName, "hst:sitemenuitem");
+        newMenuItem.setProperty("hst:referencesitemapitem", route.getUrl().substring(1));
     }
 
     private Node addNode(Node node, String nodeName, String type, boolean dryRun) throws RepositoryException {
