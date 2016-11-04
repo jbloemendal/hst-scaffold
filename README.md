@@ -36,7 +36,7 @@ Conventions:
 ```
 - template and component names are unique
 - define abstract/common components at the top
-...
+
 ```
 
 Usage:
