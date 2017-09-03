@@ -1,10 +1,12 @@
 package org.onehippo;
 
 
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.build.ScaffoldBuilder;
+import org.onehippo.examination.Examination;
 import org.onehippo.fold.FileFolder;
 
 import java.io.*;
@@ -38,6 +40,7 @@ public class HSTScaffold {
 
     private static HSTScaffold scaffold;
     private ScaffoldBuilder builder;
+    private Examination examination;
     private FileFolder folder;
 
     private List<Route> routes = new ArrayList<Route>();
@@ -185,6 +188,10 @@ public class HSTScaffold {
 
     }
 
+    public void setExamination(Examination examination) {
+        this.examination = examination;
+    }
+
     public void setBuilder(ScaffoldBuilder builder) {
         this.builder = builder;
     }
@@ -223,6 +230,17 @@ public class HSTScaffold {
             }
         }
         return null;
+    }
+
+    public Map<String, Object> examine() {
+        Map<String, Object> diagnose = new HashedMap();
+        if (this.examination != null) {
+            diagnose.putAll(this.examination.diagnoseComponents());
+            diagnose.putAll(this.examination.diagnoseMenus());
+            diagnose.putAll(this.examination.diagnoseSitemaps());
+            diagnose.putAll(this.examination.diagnoseTemplates());
+        }
+        return diagnose;
     }
 
     public static HSTScaffold instance(String path) throws IOException {

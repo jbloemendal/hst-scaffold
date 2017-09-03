@@ -8,8 +8,6 @@ import org.onehippo.Route;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -27,6 +25,7 @@ public class RepositoryBuilder implements ScaffoldBuilder {
 
     private Rollback rollback;
     private TemplateBuilder templateBuilder;
+
 
     public Pattern PATH_SEGMENT = Pattern.compile("[^/]+/");
 
@@ -131,8 +130,10 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     private void buildPages(Route route, boolean dryRun) throws IOException, RepositoryException {
         log.debug(String.format("%s Build page %s", (dryRun? "DRYRUN " : ""), route.getPageConstruct()));
 
-        Node pages = projectHstConfRoot.getNode("hst:pages");
-        buildPageNode(pages, route.getPage(), dryRun);
+        if (projectHstConfRoot.hasNode("hst:pages")) {
+            Node pages = projectHstConfRoot.getNode("hst:pages");
+            buildPageNode(pages, route.getPage(), dryRun);
+        }
     }
 
     private void buildPageNode(Node root, Route.Component component, boolean dryRun) throws RepositoryException, IOException {

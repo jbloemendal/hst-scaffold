@@ -37,13 +37,15 @@ public class ProjectRollback implements Rollback {
     }
 
     public void backup(boolean dryRun) throws IOException, RepositoryException {
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+        String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
+        String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+
         File backup = new File(scaffoldDir, "history/"+System.currentTimeMillis());
         log.info(String.format("%s Creating backup directory %s", (dryRun? "DRYRUN " : ""), backup.getPath()));
         if (!dryRun) {
             backup.mkdirs();
         }
-
-        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
         File hstConfFile = new File(backup, projectName+"_hst.xml");
         log.info(String.format("%s Export hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
@@ -51,9 +53,6 @@ public class ProjectRollback implements Rollback {
             OutputStream out = new FileOutputStream(hstConfFile);
             projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
         }
-
-        String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
-        String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
 
         File componentDirectory = new File(projectDir, javaFilePath);
         File templateDirectory = new File(projectDir, ftlFilePath);
@@ -64,7 +63,7 @@ public class ProjectRollback implements Rollback {
         }
     }
 
-    public void rollback(boolean dryRun) throws IOException, RepositoryException {
+    private File getLatestBackup() {
         // find latest backup folder
         File backups = new File(scaffoldDir, "history");
 
@@ -72,41 +71,58 @@ public class ProjectRollback implements Rollback {
         Arrays.sort(files);
         if (files.length == 0) {
             log.info("No backups available.");
-            return;
+            return null;
         }
 
+        return files[files.length-1];
+    }
+
+    public void rollback(boolean dryRun) throws IOException, RepositoryException {
         log.info(String.format("%s Move current project conf into trash.", (dryRun? "DRYRUN " : "")));
-        File trash = new File(scaffoldDir, "trash/"+System.currentTimeMillis());
-        if (!trash.exists()) {
-            trash.mkdirs();
-        }
 
-        // move current projects java and templates into .scaffold/.trash/date
+        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
         String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
         String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
         File componentDirectory = new File(projectDir, javaFilePath);
         File templateDirectory = new File(projectDir, ftlFilePath);
-
-        log.info(String.format("%s Move java components %s and templates %s into %s", (dryRun? "DRYRUN " : ""), componentDirectory.getPath(), templateDirectory.getPath(), trash.getPath()));
-        if (!dryRun) {
-            FileUtils.moveDirectory(componentDirectory, new File(trash, "java"));
-            FileUtils.moveDirectory(templateDirectory, new File(trash, "ftl"));
+        File drafts = new File(scaffoldDir, "drafts/"+System.currentTimeMillis());
+        if (!drafts.exists()) {
+            drafts.mkdirs();
         }
+        File hstConfFile = new File(drafts, projectName+"_hst.xml");
 
-        // export current projects hst conf to .scaffold/.trash/date
-        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
-
-        File hstConfFile = new File(trash, projectName+"_hst.xml");
-        log.info(String.format("%s Export hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
-        if (!dryRun) {
-            OutputStream out = new BufferedOutputStream(new FileOutputStream(hstConfFile));
-            projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
-        }
+        saveDraft(dryRun, projectName, componentDirectory, templateDirectory, drafts, hstConfFile);
 
         log.info("Restore backup");
+        File latest = getLatestBackup();
 
-        File latest = files[files.length-1];
+        restoreFromBackup(dryRun, componentDirectory, templateDirectory, latest);
+        restoreHstConfig(dryRun, projectName, latest);
+        removeBackup(dryRun, latest);
+    }
 
+    private void removeBackup(boolean dryRun, File latest) throws IOException {
+        // remove backup folder
+        log.info(String.format("%s Delete backup %s", (dryRun? "DRYRUN " : ""), latest));
+        if (!dryRun) {
+            FileUtils.deleteDirectory(latest);
+        }
+    }
+
+    private void restoreHstConfig(boolean dryRun, String projectName, File latest) throws RepositoryException, IOException {
+        File hstConfFile;// restore hst config
+        hstConfFile = new File(latest, projectName+"_hst.xml");
+        log.info(String.format("%s Import hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
+        if (!dryRun) {
+            projectHstConfRoot.getSession().removeItem(projectHstConfRoot.getPath());
+
+            Node hstConfigurations = hstRoot.getNode("hst:configurations");
+            InputStream in = new BufferedInputStream(new FileInputStream(hstConfFile));
+            projectHstConfRoot.getSession().importXML(hstConfigurations.getPath(), in, ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
+        }
+    }
+
+    private void restoreFromBackup(boolean dryRun, File componentDirectory, File templateDirectory, File latest) throws IOException {
         // copy java and templates from backup folder
         File latestJavaFilesBackup = new File(latest, "java");
         File latestTemplateFilesBackup = new File(latest, "ftl");
@@ -117,22 +133,21 @@ public class ProjectRollback implements Rollback {
             FileUtils.copyDirectory(latestJavaFilesBackup, componentDirectory);
             FileUtils.copyDirectory(latestTemplateFilesBackup, templateDirectory);
         }
+    }
 
-        // restore hst config
-        hstConfFile = new File(latest, projectName+"_hst.xml");
-        log.info(String.format("%s Import hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
+    private void saveDraft(boolean dryRun, String projectName, File componentDirectory, File templateDirectory, File drafts, File hstConfFile) throws IOException, RepositoryException {
+        log.info(String.format("%s Move java components %s and templates %s into %s", (dryRun? "DRYRUN " : ""), componentDirectory.getPath(), templateDirectory.getPath(), drafts.getPath()));
+        // move current projects java and templates into .scaffold/drafts/date
         if (!dryRun) {
-            projectHstConfRoot.getSession().removeItem(projectHstConfRoot.getPath());
-
-            Node hstConfigurations = hstRoot.getNode("hst:configurations");
-            InputStream in = new BufferedInputStream(new FileInputStream(hstConfFile));
-            projectHstConfRoot.getSession().importXML(hstConfigurations.getPath(), in, ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
+            FileUtils.moveDirectory(componentDirectory, new File(drafts, "java"));
+            FileUtils.moveDirectory(templateDirectory, new File(drafts, "ftl"));
         }
 
-        // remove backup folder
-        log.info(String.format("%s Delete backup %s", (dryRun? "DRYRUN " : ""), latest));
+        // export current projects hst conf to .scaffold/drafts/date
+        log.info(String.format("%s Export hst \"%s\" config %s", (dryRun? "DRYRUN " : ""), projectName, hstConfFile.getPath()));
         if (!dryRun) {
-            FileUtils.deleteDirectory(latest);
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(hstConfFile));
+            projectHstConfRoot.getSession().exportDocumentView(projectHstConfRoot.getPath(), out, true, false);
         }
     }
 

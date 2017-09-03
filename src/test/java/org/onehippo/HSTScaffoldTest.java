@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit test for HSTScaffold.
@@ -99,6 +100,28 @@ public class HSTScaffoldTest extends TestCase {
         assertTrue(routes.get(3).getPage().getComponents().get(1).isPointer());
     }
 
-    // todo test .html / .htm sitemap items
+    public void testDiagnoseSitemap() throws IOException {
+        // TODO
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+        Map<String, Object> result = scaffold.examine();
+    }
+
+    public void testDiagnoseMenu() throws IOException {
+        // TODO
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+        Map<String, Object> result = scaffold.examine();
+    }
+
+    public void testDiagnoseComponents() throws IOException {
+        // TODO
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+        Map<String, Object> result = scaffold.examine();
+    }
+
+    public void testDiagnoseTemplates() throws IOException {
+        // TODO
+        HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
+        Map<String, Object> result = scaffold.examine();
+    }
 
 }
