@@ -107,19 +107,19 @@ public class ProjectExamination implements Examination {
         return containerItem;
     }
 
-    public Map<String, Object> diagnoseComponents() {
+    public Map<String, Diagnose> diagnoseComponents() {
         return null;
     }
 
-    public Map<String, Object> diagnoseSitemaps() {
+    public Map<String, Diagnose> diagnoseSitemaps() {
         return null;
     }
 
-    public Map<String, Object> diagnoseMenus() {
+    public Map<String, Diagnose> diagnoseMenus() {
         return null;
     }
 
-    public Map<String, Object> diagnoseTemplates() {
+    public Map<String, Diagnose> diagnoseTemplates() {
         return null;
     }
 }

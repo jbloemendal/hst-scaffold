@@ -4,6 +4,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.log4j.Logger;
+import org.onehippo.examination.Diagnose;
 
 import java.io.*;
 import java.util.List;
@@ -103,25 +104,25 @@ public class HSTScaffoldTest extends TestCase {
     public void testDiagnoseSitemap() throws IOException {
         // TODO
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-        Map<String, Object> result = scaffold.examine();
+        Map<String, Diagnose> result = scaffold.examine();
     }
 
     public void testDiagnoseMenu() throws IOException {
         // TODO
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-        Map<String, Object> result = scaffold.examine();
+        Map<String, Diagnose> result = scaffold.examine();
     }
 
     public void testDiagnoseComponents() throws IOException {
         // TODO
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-        Map<String, Object> result = scaffold.examine();
+        Map<String, Diagnose> result = scaffold.examine();
     }
 
     public void testDiagnoseTemplates() throws IOException {
         // TODO
         HSTScaffold scaffold = HSTScaffold.instance("./myhippoproject");
-        Map<String, Object> result = scaffold.examine();
+        Map<String, Diagnose> result = scaffold.examine();
     }
 
 }

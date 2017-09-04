@@ -5,12 +5,12 @@ import java.util.Map;
 
 public interface Examination {
 
-    Map<String, Object> diagnoseComponents();
+    Map<String, Diagnose> diagnoseComponents();
 
-    Map<String, Object> diagnoseSitemaps();
+    Map<String, Diagnose> diagnoseSitemaps();
 
-    Map<String, Object> diagnoseMenus();
+    Map<String, Diagnose> diagnoseMenus();
 
-    Map<String, Object> diagnoseTemplates();
+    Map<String, Diagnose> diagnoseTemplates();
 
 }

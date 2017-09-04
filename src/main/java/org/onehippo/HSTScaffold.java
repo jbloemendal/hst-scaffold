@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.onehippo.build.ScaffoldBuilder;
+import org.onehippo.examination.Diagnose;
 import org.onehippo.examination.Examination;
 import org.onehippo.fold.FileFolder;
 
@@ -232,8 +233,8 @@ public class HSTScaffold {
         return null;
     }
 
-    public Map<String, Object> examine() {
-        Map<String, Object> diagnose = new HashedMap();
+    public Map<String, Diagnose> examine() {
+        Map<String, Diagnose> diagnose = new HashedMap();
         if (this.examination != null) {
             diagnose.putAll(this.examination.diagnoseComponents());
             diagnose.putAll(this.examination.diagnoseMenus());
