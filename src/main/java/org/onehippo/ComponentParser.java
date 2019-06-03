@@ -52,47 +52,48 @@ public class ComponentParser {
             }
         }
 
-        if (!matcher.matches()) {
+        if (matcher.matches()) {
+            String word = matcher.group(2);
+
+            Route.Component component = new Route.Component(word);
+            if (parent != null) {
+                parent.add(component);
+            }
+
+            component.setReference(reference);
+            component.setPointer(pointer);
+
+            expr = expr.substring(matcher.group(1).length()+matcher.group(2).length());
+
+            matcher = OPEN_BRACKET.matcher(expr);
+            if (matcher.matches()) {
+                expr = expr.substring(matcher.group(1).length());
+                matcher = SUB_EXPRESSION.matcher(expr);
+                if (matcher.matches()) {
+                    String subExpression = matcher.group(1);
+                    parseComponentExpression(component, subExpression);
+                    expr = expr.substring(subExpression.length());
+                }
+
+                matcher = CLOSE_BRACKET.matcher(expr);
+                if (matcher.matches()) {
+                    expr = expr.substring(matcher.group(1).length());
+                } else {
+                    return null;
+                }
+            }
+
+            matcher = COMMA.matcher(expr);
+            if (matcher.matches()) {
+                expr = expr.substring(matcher.group(1).length());
+                parseComponentExpression(parent, expr);
+            }
+
+            return component;
+        } else {
             return null;
         }
 
-        String word = matcher.group(2);
-
-        Route.Component component = new Route.Component(word);
-        if (parent != null) {
-            parent.add(component);
-        }
-
-        component.setReference(reference);
-        component.setPointer(pointer);
-
-        expr = expr.substring(matcher.group(1).length()+matcher.group(2).length());
-
-        matcher = OPEN_BRACKET.matcher(expr);
-        if (matcher.matches()) {
-            expr = expr.substring(matcher.group(1).length());
-            matcher = SUB_EXPRESSION.matcher(expr);
-            if (matcher.matches()) {
-                String subExpression = matcher.group(1);
-                parseComponentExpression(component, subExpression);
-                expr = expr.substring(subExpression.length());
-            }
-
-            matcher = CLOSE_BRACKET.matcher(expr);
-            if (!matcher.matches()) {
-                return null;
-            }
-
-            expr = expr.substring(matcher.group(1).length());
-        }
-
-        matcher = COMMA.matcher(expr);
-        if (matcher.matches()) {
-            expr = expr.substring(matcher.group(1).length());
-            parseComponentExpression(parent, expr);
-        }
-
-        return component;
     }
 
 }

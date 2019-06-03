@@ -54,10 +54,11 @@ public class HSTScaffold {
         loadProperties(scaffoldDir);
 
         File scaffoldConf = new File(projectDirPath, "scaffold.hst");
-        if (!scaffoldConf.exists()) {
-            throw new IOException(String.format("Scaffold configuration scaffold.hst is missing %s.", scaffoldConf.getAbsolutePath()));
+        if (scaffoldConf.exists()) {
+            read(new InputStreamReader(new FileInputStream(scaffoldConf)));
+            return;
         }
-        read(new InputStreamReader(new FileInputStream(scaffoldConf)));
+        throw new IOException(String.format("Scaffold configuration scaffold.hst is missing %s.", scaffoldConf.getAbsolutePath()));
     }
 
     private void loadProperties(File scaffoldDir) {
@@ -86,16 +87,15 @@ public class HSTScaffold {
 
     private File createHiddenScaffold(String projectDirPath) throws IOException {
         File projectDir = new File(projectDirPath);
-        if (!projectDir.exists()) {
+        if (projectDir.exists()) {
+            File scaffoldDir = new File(projectDir, ".scaffold");
+            if (!scaffoldDir.exists()) {
+                scaffoldDir.mkdirs();
+            }
+            return scaffoldDir;
+        } else {
             throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
         }
-
-        File scaffoldDir = new File(projectDir, ".scaffold");
-        if (!scaffoldDir.exists()) {
-            scaffoldDir.mkdirs();
-        }
-
-        return scaffoldDir;
     }
 
     private void copyDefaultFiles(File scaffoldDir) throws IOException {
@@ -158,29 +158,31 @@ public class HSTScaffold {
             }
 
             Matcher matcher = URL.matcher(line);
-            if (!matcher.find() || StringUtils.isEmpty(matcher.group(2))) {
+            if (matcher.find() && StringUtils.isNotEmpty(matcher.group(2))) {
+                String url = matcher.group(2);
+                line = line.substring(matcher.group(1).length()+matcher.group(2).length());
+
+                matcher = CONTENT.matcher(line);
+                if (matcher.find() && StringUtils.isNotEmpty(matcher.group(2))) {
+                    String content = matcher.group(2);
+                    line = line.substring(matcher.group(1).length()+matcher.group(2).length());
+
+                    matcher = PAGE.matcher(line);
+                    if (matcher.find()) {
+                        String page = matcher.group(1);
+                        routes.add(new Route(url, content, page));
+                    } else {
+                        log.warn("Invalid route, page: "+line);
+                        continue;
+                    }
+                } else {
+                    log.warn("Invalid route, content: "+line);
+                    continue;
+                }
+            } else {
                 log.warn("Invalid route, url: "+line);
                 continue;
             }
-            String url = matcher.group(2);
-            line = line.substring(matcher.group(1).length()+matcher.group(2).length());
-
-            matcher = CONTENT.matcher(line);
-            if (!matcher.find() || StringUtils.isEmpty(matcher.group(2))) {
-                log.warn("Invalid route, content: "+line);
-                continue;
-            }
-            String content = matcher.group(2);
-            line = line.substring(matcher.group(1).length()+matcher.group(2).length());
-
-            matcher = PAGE.matcher(line);
-            if (!matcher.find()) {
-                log.warn("Invalid route, page: "+line);
-                continue;
-            }
-
-            String page = matcher.group(1);
-            routes.add(new Route(url, content, page));
         }
 
     }

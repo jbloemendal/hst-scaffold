@@ -223,20 +223,22 @@ public class Route {
             }
 
             expr.append(name);
-            if (!isLeaf()) {
-                expr.append("(");
 
-                StringBuilder subExpr = new StringBuilder();
-                for (Component child : components) {
-                    if (subExpr.length() != 0) {
-                        subExpr.append(", ");
-                    }
-                    subExpr.append(child.toString());
-                }
-
-                expr.append(subExpr.toString());
-                expr.append(")");
+            if (isLeaf()) {
+                return expr.toString();
             }
+
+            expr.append("(");
+            StringBuilder subExpr = new StringBuilder();
+            for (Component child : components) {
+                if (subExpr.length() > 0) {
+                    subExpr.append(", ");
+                }
+                subExpr.append(child.toString());
+            }
+
+            expr.append(subExpr.toString());
+            expr.append(")");
 
             return expr.toString();
         }

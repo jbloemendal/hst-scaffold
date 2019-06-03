@@ -36,10 +36,11 @@ public class HSTScaffoldCLI {
             } else if (line.hasOption("r")) {
                 rollback(scaffold, dryRun);
             } else if (line.hasOption("s")) {
-                if (args.length != 3) {
+                if (args.length == 3) {
+                    reverse(scaffold, args[1], args[2], dryRun);
+                } else {
                     throw new IllegalArgumentException("arguments missing [projectNodePath] [destinationFile]");
                 }
-                reverse(scaffold, args[1], args[2], dryRun);
             } else {
                 printHelp(options);
             }
