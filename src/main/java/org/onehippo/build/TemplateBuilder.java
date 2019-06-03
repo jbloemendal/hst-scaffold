@@ -31,13 +31,13 @@ public class TemplateBuilder {
 
     public TemplateBuilder() throws RepositoryException, IOException {
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
-        if (!projectDir.exists()) {
+        if (projectDir.exists()) {
+            scaffoldDir = new File(projectDir, ".scaffold");
+            if (!scaffoldDir.exists()) {
+                scaffoldDir.mkdirs();
+            }
+        } else {
             throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
-        }
-
-        scaffoldDir = new File(projectDir, ".scaffold");
-        if (!scaffoldDir.exists()) {
-            scaffoldDir.mkdirs();
         }
     }
 

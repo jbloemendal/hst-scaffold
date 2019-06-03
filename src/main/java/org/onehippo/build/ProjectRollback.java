@@ -26,13 +26,13 @@ public class ProjectRollback implements Rollback {
         projectHstConfRoot = hstRoot.getNode("hst:configurations").getNode(projectHstNodeName);
 
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
-        if (!projectDir.exists()) {
+        if (projectDir.exists()) {
+            scaffoldDir = new File(projectDir, ".scaffold");
+            if (!scaffoldDir.exists()) {
+                scaffoldDir.mkdirs();
+            } 
+        } else {
             throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
-        }
-
-        scaffoldDir = new File(projectDir, ".scaffold");
-        if (!scaffoldDir.exists()) {
-            scaffoldDir.mkdirs();
         }
     }
 
@@ -41,8 +41,7 @@ public class ProjectRollback implements Rollback {
         log.info(String.format("%s Creating backup directory %s", (dryRun? "DRYRUN " : ""), backup.getPath()));
         if (!dryRun) {
             backup.mkdirs();
-        }
-
+        } 
         String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
 
         File hstConfFile = new File(backup, projectName+"_hst.xml");
@@ -80,7 +79,6 @@ public class ProjectRollback implements Rollback {
         if (!trash.exists()) {
             trash.mkdirs();
         }
-
         // move current projects java and templates into .scaffold/.trash/date
         String javaFilePath = HSTScaffold.properties.getProperty(HSTScaffold.JAVA_COMPONENT_PATH);
         String ftlFilePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);

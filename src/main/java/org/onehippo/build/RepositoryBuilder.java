@@ -37,17 +37,18 @@ public class RepositoryBuilder implements ScaffoldBuilder {
         projectHstConfRoot = hstRoot.getNode("hst:configurations").getNode(projectHstNodeName);
 
         projectDir = new File(HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR));
-        if (!projectDir.exists()) {
+        if (projectDir.exists()) {
+            scaffoldDir = new File(projectDir, ".scaffold");
+            if (!scaffoldDir.exists()) {
+                scaffoldDir.mkdirs();
+            }
+
+            rollback = new ProjectRollback(hstRoot);
+            templateBuilder = new TemplateBuilder();
+        } else {
             throw new IOException(String.format("Project directory doesn't exist %s.", HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR)));
         }
 
-        scaffoldDir = new File(projectDir, ".scaffold");
-        if (!scaffoldDir.exists()) {
-            scaffoldDir.mkdirs();
-        }
-
-        rollback = new ProjectRollback(hstRoot);
-        templateBuilder = new TemplateBuilder();
     }
 
     public void build(boolean dryRun) throws IOException, RepositoryException {
@@ -68,64 +69,65 @@ public class RepositoryBuilder implements ScaffoldBuilder {
     }
 
     private Node buildWorkspaceComponentHstConf(Route.Component component, boolean dryRun) throws RepositoryException {
-        if (!component.isLeaf()) {
+        if (component.isLeaf()) {
+            if (projectHstConfRoot.hasNode("hst:workspace")) {
+                Node workspace = projectHstConfRoot.getNode("hst:workspace");
+
+                if (workspace.hasNode("hst:containers")) {
+                    log.debug(String.format("%s Build workspace component %s.", (dryRun? "DRYRUN " : ""), component.getComponentPath()));
+                    if (dryRun) {
+                        return null;
+                    }
+
+                    Node containers = workspace.getNode("hst:containers");
+
+                    // find container parent
+                    List<Route.Component> parents = component.getParents();
+                    Route.Component page = parents.remove(0);
+
+                    // root
+                    Node container;
+                    if (containers.hasNode(page.getName())) {
+                        container = containers.getNode(page.getName());
+                    } else {
+                        container = containers.addNode(page.getName(), "hst:containercomponentfolder");
+                    }
+
+                    for (Route.Component branch : component.getReferenceBranch()) {
+                        if (container.hasNode(branch.getName())) {
+                            container = container.getNode(branch.getName());
+                        } else {
+                            container = container.addNode(branch.getName(), "hst:containercomponent");
+                            container.setProperty("hst:xtype", "HST.vBox");
+                        }
+                    }
+
+                    if (container.hasNode(component.getName())) {
+                        return container.getNode(component.getName());
+                    }
+
+                    // structure
+                    if (!container.isNodeType("hst:containercomponent")) {
+                        container = container.addNode(component.getName(), "hst:containercomponent");
+                        container.setProperty("hst:xtype", "HST.vBox");
+                    }
+
+                    Node containerItem = container.addNode(component.getName(), "hst:containeritemcomponent");
+                    containerItem.setProperty("hst:componentclassname", component.getJavaClass());
+                    containerItem.setProperty("hst:template", component.getTemplateName());
+                    containerItem.setProperty("hst:xtype", "HST.Item");
+
+                    return containerItem;
+                } else {
+                    throw new RepositoryException("HST configuration child hst:containers misses.");
+                }
+            } else {
+                throw new RepositoryException("HST configuration child hst:workspace misses.");
+            }
+        } else {
             log.error("Component is not a leaf");
             return null;
         }
-
-        if (!projectHstConfRoot.hasNode("hst:workspace")) {
-            throw new RepositoryException("HST configuration child hst:workspace misses.");
-        }
-
-        Node workspace = projectHstConfRoot.getNode("hst:workspace");
-        if (!workspace.hasNode("hst:containers")) {
-            throw new RepositoryException("HST configuration child hst:containers misses.");
-        }
-
-        log.debug(String.format("%s Build workspace component %s.", (dryRun? "DRYRUN " : ""), component.getComponentPath()));
-        if (dryRun) {
-            return null;
-        }
-
-        Node containers = workspace.getNode("hst:containers");
-
-        // find container parent
-        List<Route.Component> parents = component.getParents();
-        Route.Component page = parents.remove(0);
-
-        // root
-        Node container;
-        if (!containers.hasNode(page.getName())) {
-            container = containers.addNode(page.getName(), "hst:containercomponentfolder");
-        } else {
-            container = containers.getNode(page.getName());
-        }
-
-        for (Route.Component branch : component.getReferenceBranch()) {
-            if (container.hasNode(branch.getName())) {
-                container = container.getNode(branch.getName());
-            } else {
-                container = container.addNode(branch.getName(), "hst:containercomponent");
-                container.setProperty("hst:xtype", "HST.vBox");
-            }
-        }
-
-        if (container.hasNode(component.getName())) {
-            return container.getNode(component.getName());
-        }
-
-        // let's create structure, if missing
-        if (!container.isNodeType("hst:containercomponent")) {
-            container = container.addNode(component.getName(), "hst:containercomponent");
-            container.setProperty("hst:xtype", "HST.vBox");
-        }
-
-        Node containerItem = container.addNode(component.getName(), "hst:containeritemcomponent");
-        containerItem.setProperty("hst:componentclassname", component.getJavaClass());
-        containerItem.setProperty("hst:template", component.getTemplateName());
-        containerItem.setProperty("hst:xtype", "HST.Item");
-
-        return containerItem;
     }
 
     private void buildPages(Route route, boolean dryRun) throws IOException, RepositoryException {
