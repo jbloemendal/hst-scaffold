@@ -80,33 +80,34 @@ public class FileFolder implements Folder {
             return true;
         }
         Node templates = hstProjectRoot.getNode("hst:templates");
-        if (!templates.hasNode(templateName)) {
-            log.warn(String.format("Component %s is inconsistent template node %s is missing.", component.getName(), templateName));
-            return true;
-        }
+        if (templates.hasNode(templateName)) {
+            //        if (component.isInherited()) {
+            //            return false;
+            //        }
+            // todo improve
+            Node templateNode = templates.getNode(templateName);
+            if (templateNode.hasProperty("hst:renderpath")) {
+                String renderPath = templateNode.getProperty("hst:renderpath").getString();
+                if (!component.getWebfilePath().equals(renderPath)) {
+                    log.warn(String.format("Component %s is inconsistent %s != %s",
+                            component.getName(), renderPath, component.getWebfilePath()));
+                    return true;
+                }
+            }
 
-//        if (component.isInherited()) {
-//            return false;
-//        }
-
-        // todo improve
-        Node templateNode = templates.getNode(templateName);
-        if (templateNode.hasProperty("hst:renderpath")) {
-            String renderPath = templateNode.getProperty("hst:renderpath").getString();
-            if (!component.getWebfilePath().equals(renderPath)) {
-                log.warn(String.format("Component %s is inconsistent %s != %s",
-                        component.getName(), renderPath, component.getWebfilePath()));
+            File templateFile = new File(component.getTemplateFilePath());
+            if (templateFile.exists()) {
+                return false;
+            } else {
+                log.warn(String.format("Component %s is inconsistent template file %s is missing.", component.getName(), templateFile.getPath()));
                 return true;
             }
-        }
 
-        File templateFile = new File(component.getTemplateFilePath());
-        if (!templateFile.exists()) {
-            log.warn(String.format("Component %s is inconsistent template file %s is missing.", component.getName(), templateFile.getPath()));
+        } else {
+            log.warn(String.format("Component %s is inconsistent template node %s is missing.", component.getName(), templateName));
             return true;
-        }
 
-        return false;
+        }
     }
 
     private boolean isComponentClassInconsistent(Node componentNode, Route.Component component) throws RepositoryException {
@@ -121,11 +122,12 @@ public class FileFolder implements Folder {
         String filePath = projectDir+"/"+HSTScaffold.properties.get(HSTScaffold.JAVA_COMPONENT_PATH)+"/"+classPath+".java";
         File javaFile = new File(filePath);
 
-        if (!javaFile.exists()) {
+        if (javaFile.exists()) {
+            return false;
+        } else {
             log.warn(String.format("Component %s is inconsistent Java File %s misses", component.getName(), javaFile.getPath()));
             return true;
         }
-        return false;
     }
 
     private void include(Node componentNode, Route.Component component) throws RepositoryException {
@@ -184,9 +186,7 @@ public class FileFolder implements Folder {
     }
 
     private Node getReferenceBase(String reference) throws RepositoryException {
-        if (getRelativeNode(hstProjectRoot, reference) != null) {
-            return hstProjectRoot;
-        } else {
+        if (getRelativeNode(hstProjectRoot, reference) == null) {
             Node cursor = hstProjectRoot;
             while (cursor.hasProperty("hst:inheritsfrom")) {
                 String inheritsFrom = cursor.getProperty("hst:inheritsfrom").getString();
@@ -195,6 +195,8 @@ public class FileFolder implements Folder {
                     return cursor;
                 }
             }
+        } else {
+            return hstProjectRoot;
         }
         return null;
     }
@@ -223,23 +225,23 @@ public class FileFolder implements Folder {
 
 
     private Route foldRoute(Node sitemapItem) throws RepositoryException {
-        if (!sitemapItem.hasProperty("hst:componentconfigurationid")) {
+        if (sitemapItem.hasProperty("hst:componentconfigurationid")) {
+            String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
+            Route.Component page = fold(getRelativeNode(hstProjectRoot, relativeComponentPath));
+
+            String contentPath = getContentPath(sitemapItem);
+            contentPath = "/"+contentPath;
+
+            String url = getUrl(sitemapItem);
+
+            Route route = new Route(url.toString(), contentPath, page.toString());
+
+            route.setPage(page);
+
+            return route;
+        } else {
             return null;
         }
-
-        String relativeComponentPath = sitemapItem.getProperty("hst:componentconfigurationid").getString();
-        Route.Component page = fold(getRelativeNode(hstProjectRoot, relativeComponentPath));
-
-        String contentPath = getContentPath(sitemapItem);
-        contentPath = "/"+contentPath;
-
-        String url = getUrl(sitemapItem);
-
-        Route route = new Route(url.toString(), contentPath, page.toString());
-
-        route.setPage(page);
-
-        return route;
     }
 
 
