@@ -64,12 +64,13 @@ public class TestUtils {
         for (Map.Entry<String, String> entry : dir1.entrySet()) {
             String filePath = entry.getKey();
 
-            if (!dir2.containsKey(filePath)) {
+            if (dir2.containsKey(filePath)) {
+                if (!entry.getValue().equals(dir2.get(filePath))) {
+                    log.debug(filePath+": checksum changed");
+                    return true;
+                }
+            } else {
                 log.debug("dir2 doesn't contain file "+filePath);
-                return true;
-            }
-            if (!entry.getValue().equals(dir2.get(filePath))) {
-                log.debug(filePath+": checksum changed");
                 return true;
             }
         }

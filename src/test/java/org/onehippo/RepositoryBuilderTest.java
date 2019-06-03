@@ -40,69 +40,70 @@ public class RepositoryBuilderTest extends TestCase {
     }
 
     private boolean isHstTemplateConfValid(Node templates, Route.Component component) throws RepositoryException {
-        if (!templates.hasNode(component.getTemplateName())) {
+        if (templates.hasNode(component.getTemplateName())) {
+            Node template = templates.getNode(component.getTemplateName());
+            if ("hst:template".equals(template.getProperty("jcr:primaryType").getString())) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
             return false;
         }
-
-        Node template = templates.getNode(component.getTemplateName());
-        if (!"hst:template".equals(template.getProperty("jcr:primaryType").getString())) {
-            return false;
-        }
-
-        return true;
     }
 
     private boolean areTemplateIncludesValid(Node templates, Route.Component component) throws IOException, RepositoryException {
         Node templateNode = templates.getNode(component.getName());
-        if (!templateNode.hasProperty("hst:renderpath")) {
+        if (templateNode.hasProperty("hst:renderpath")) {
+            String renderPath = templateNode.getProperty("hst:renderpath").getString();
+
+            String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
+            String basePath = HSTScaffold.properties.getProperty(HSTScaffold.WEBFILE_BASE_PATH);
+
+            renderPath = renderPath.replace(basePath+projectName, "");
+
+            String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
+            String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
+
+            String template = TestUtils.readFile(projectDir+"/"+templatePath+"/"+renderPath);
+            for (Route.Component child : component.getComponents()) {
+                if (!template.contains("<@hst.include ref=\""+child.getName()+"\" />")) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
             return false;
         }
-        String renderPath = templateNode.getProperty("hst:renderpath").getString();
-
-        String projectName = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_NAME);
-        String basePath = HSTScaffold.properties.getProperty(HSTScaffold.WEBFILE_BASE_PATH);
-
-        renderPath = renderPath.replace(basePath+projectName, "");
-
-        String projectDir = HSTScaffold.properties.getProperty(HSTScaffold.PROJECT_DIR);
-        String templatePath = HSTScaffold.properties.getProperty(HSTScaffold.TEMPLATE_PATH);
-
-        String template = TestUtils.readFile(projectDir+"/"+templatePath+"/"+renderPath);
-        for (Route.Component child : component.getComponents()) {
-            if (!template.contains("<@hst.include ref=\""+child.getName()+"\" />")) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private boolean validateComponent(Node templates, Node root, Route.Component component) throws XPathExpressionException, RepositoryException, IOException {
         // todo add test for referenced component structures
-        if (component.isReference() || component.isPointer()) {
+        if (component.isReference() && component.isPointer()) {
+            if (root.hasNode(component.getName())) {
+                Node componentNode = root.getNode(component.getName());
+                if (isHstComponentConfValid(component, componentNode)
+                        && isHstTemplateConfValid(templates, component)
+                        && areTemplateIncludesValid(templates, component)) {
+                    for (Route.Component child : component.getComponents()) {
+                        if (componentNode.hasNode(child.getName())) {
+                            return validateComponent(templates, componentNode, child);
+                        } else {
+                            return false;
+                        }
+                    }
+                } else {
+                    return false;
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        } else {
             // skip
             return true;
         }
-
-        if (!root.hasNode(component.getName())) {
-            return false;
-        }
-
-        Node componentNode = root.getNode(component.getName());
-        if (!isHstComponentConfValid(component, componentNode)
-                || !isHstTemplateConfValid(templates, component)
-                || !areTemplateIncludesValid(templates, component)) {
-            return false;
-        }
-
-        for (Route.Component child : component.getComponents()) {
-            if (!componentNode.hasNode(child.getName())) {
-                return false;
-            }
-
-            return validateComponent(templates, componentNode, child);
-        }
-
-        return true;
     }
 
     private boolean isHstComponentConfValid(Route.Component component, Node componentNode) throws RepositoryException {
@@ -110,24 +111,25 @@ public class RepositoryBuilderTest extends TestCase {
             return false;
         }
 
-        if (!componentNode.hasProperty(JCR_PRIMARY_TYPE)
-                || !HST_COMPONENT.equals(componentNode.getProperty(JCR_PRIMARY_TYPE).getString())) {
+        if (componentNode.hasProperty(JCR_PRIMARY_TYPE)
+                && HST_COMPONENT.equals(componentNode.getProperty(JCR_PRIMARY_TYPE).getString())) {
+            if (componentNode.hasProperty(HST_COMPONENTCLASSNAME)
+                    && component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getString())) {
+                File javaFile = new File(component.getPathJavaClass());
+                assertTrue(javaFile.exists());
+
+                if (componentNode.hasProperty(HST_TEMPLATE)
+                        && component.getName().equals(componentNode.getProperty(HST_TEMPLATE).getString())) {
+                } else {
+                    return false;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } else {
             return false;
         }
-        if (!componentNode.hasProperty(HST_COMPONENTCLASSNAME)
-                || !component.getJavaClass().equals(componentNode.getProperty(HST_COMPONENTCLASSNAME).getString())) {
-            return false;
-        }
-
-        File javaFile = new File(component.getPathJavaClass());
-        assertTrue(javaFile.exists());
-
-        if (!componentNode.hasProperty(HST_TEMPLATE)
-                || !component.getName().equals(componentNode.getProperty(HST_TEMPLATE).getString())) {
-            return false;
-        }
-
-        return true;
     }
 
 
@@ -158,27 +160,29 @@ public class RepositoryBuilderTest extends TestCase {
             }
         }
 
-        if (!sitemapItem.hasProperty("hst:componentconfigurationid")) {
-            return false;
-        }
-        if (!("hst:pages/"+route.getPage().getName()).equals(sitemapItem.getProperty("hst:componentconfigurationid").getString())) {
-            return false;
-        }
-        if (!sitemapItem.hasProperty("hst:relativecontentpath")) {
-            return false;
-        }
+        if (sitemapItem.hasProperty("hst:componentconfigurationid")) {
+            if (("hst:pages/"+route.getPage().getName()).equals(sitemapItem.getProperty("hst:componentconfigurationid").getString())) {
+                if (sitemapItem.hasProperty("hst:relativecontentpath")) {
+                    int index = 1;
+                    for (Route.Parameter param : parameters) {
+                        contentPath = contentPath.replace(param.name+":"+param.type, "${"+index+"}");
+                        index++;
+                    }
 
-        int index = 1;
-        for (Route.Parameter param : parameters) {
-            contentPath = contentPath.replace(param.name+":"+param.type, "${"+index+"}");
-            index++;
-        }
-
-        if (!contentPath.substring(1).equals(sitemapItem.getProperty("hst:relativecontentpath").getString())) {
+                    if (contentPath.substring(1).equals(sitemapItem.getProperty("hst:relativecontentpath").getString())) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
             return false;
         }
-
-        return true;
     }
 
 
